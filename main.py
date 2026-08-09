@@ -12,11 +12,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from icecream import ic
 from rich import print
+import os
 
 app = FastAPI(title="Gero Zayas")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 templates = Jinja2Templates(directory="templates")
+
 
 @app.get("/")
 @app.get("/home")
@@ -26,6 +28,7 @@ def home(request: Request):
         request=request, name="home.html", context=context
     )
 
+
 @app.get("/")
 @app.get("/about")
 def about(request: Request):
@@ -34,16 +37,24 @@ def about(request: Request):
         request=request, name="about.html", context=context
     )
 
+
 @app.get("/")
 @app.get("/projects")
 def projects(request: Request):
-    projects = ["project 1", "project 2", "project 3", ]
+    projects = [
+        "project 1",
+        "project 2",
+        "project 3",
+    ]
     context = {"message": "hello world, this is about page", "projects": projects}
     return templates.TemplateResponse(
         request=request, name="projects.html", context=context
     )
 
 
-
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True)
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", 8000)),
+    )
