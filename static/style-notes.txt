@@ -1,0 +1,8 @@
+Color palette:
+--------------
+
+--primary: #024A70;
+--secondary: #2C92B8;
+--tertiary: #FFDF20;
+--light-gray: #F8FAFC;
+--mid-gray: #E2E8F0;

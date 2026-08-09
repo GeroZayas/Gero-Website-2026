@@ -24,9 +24,69 @@
 	--secondary: #2C92B8;
 	--tertiary: #FFDF20;
 	--radius:  8px;
-	min-width: 30rem;
-	background-color: var(--tertiary);
-	font-family: "Iosevka", monospace;
+	--light-gray: #F8FAFC;
+	--mid-gray: #E2E8F0;
+	min-width: 20rem;
+}
+
+html {
+    box-sizing: border-box;
+
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
+
+body {
+	margin: auto;
+    min-height: 100vh;
+    max-width: 70rem;
+    display: flex;
+    flex-direction: column;
+    font-family: "Iosevka", monospace;
+
+}
+
+main {
+    flex: 1;
+	background-color: var(--light-gray);
+
+}
+
+h1 {
+	color: var(--primary);
+}
+
+header, main, footer {
+	padding: 0.5rem;
+}
+
+header {
+	background-color: var(--mid-gray);
+	color: var(--tertiary);
+	border-radius: var(--radius);
+	display: flex;
+	justify-content: flex-end;
+}
+
+
+footer {
+	background-color: var(--primary);
+	color: var(--tertiary);
+	text-align: center;
+	border-radius: var(--radius);
+
+}
+
+
+.center-top {
+	display: flex;
+	gap:  1rem;
+	justify-content: center;
 }
 
 
