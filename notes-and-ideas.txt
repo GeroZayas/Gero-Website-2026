@@ -1,0 +1,4 @@
+Maybe we can have a blog post writer.
+---
+Write in simple markdown and then just parse it ourselves.
+---
