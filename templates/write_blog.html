@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}
+Write Blog
+{% endblock %}
+
+{% block content %}
+
+<div class="center-top">
+	<h1>Write a Blog Post</h1>
+</div>
+
+<div class="blog-metadata">
+	<div id="blog-metadata-header">
+		<b>Metadata</b>
+	</div>
+	<div style="display: grid;" id="blog-metadata-body">
+		Title:
+		<input style="width: 60%;" id="post-title" type="text">
+		Id:
+		<input style="width: 60%;" id="post-id" type="text">
+		Tags:
+		<input style="width: 60%;" id="post-tags" type="text">
+
+	</div>
+</div>
+
+
+<div class="blog-body">
+	<div id="blog-body-header">
+		<b>Body</b>
+	</div>
+	<div id="blog-body-body">
+		<textarea style="width: 95%;" id="blog-post-body" type="text"></textarea>
+	</div>
+</div>
+
+{% endblock %}
