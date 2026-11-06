@@ -83,11 +83,11 @@ footer {
 
 }
 
-
 .center-top {
 	display: flex;
-	gap:  1rem;
-	justify-content: center;
+	gap:  0.5rem;
+	justify-content: center; /*horizontally*/
+    align-items: center; /*vertically*/
 }
 
 
