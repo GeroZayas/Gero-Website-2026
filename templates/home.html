@@ -1,9 +1,7 @@
-{% extends "base.html" %} {% block title %} Gero Zayas - Home {% endblock %}
-
+{% extends "base.html" %} {% block title %} Gero Zayas - Home {% endblock %} {%
+block content %}
 <article>
-  {% block content %}
-
-  <div class="center-top">
+  <div class="center-top" style="padding-top: 0.5rem">
     <img
       style="aspect-ratio: 1; width: 5rem; height: 5rem"
       id="profile-pic-1"
@@ -11,25 +9,65 @@
     />
     <h1>Gero Zayas's Web Home</h1>
   </div>
+
   <div class="center-top">
-    <p>Qué bola, asere? Let's do some programming...</p>
+    <p>¿Qué bolá, asere? Let's do some programming...</p>
   </div>
 
-  <h3>Who am I?</h3>
-  I'm Gero Zayas. Born in Cuba. Live in Barcelona, Spain.
-  <h3>What do I do?</h3>
-  I program.
-  <h3>What have I made?</h3>
-  ...
-  <h3>What do I believe in?</h3>
-  ...
-  <h3>Things I love</h3>
-  ...
+  <div class="centered" id="home-personal-questions-info-section">
+    <h3>Who am I?</h3>
+    <p class="home-info">
+      I'm Gero Zayas. Born in Cuba. Live in Barcelona, Spain. I love
+      programming. I don't mind typing every word in the code myself.
+    </p>
+    <h3>What do I do?</h3>
+    <p class="home-info">
+      I program. I create tools for education, entertainment and empowerment. I
+      help people with learning and getting better at programming, engineering
+      and creativity.
+    </p>
+    <h3>What have I made?</h3>
+    <ul class="home-info">
+      <li><a href="https://github.com/GeroZayas/Dir-Diff">Dir Diff</a></li>
+      <li>
+        <a href="https://github.com/GeroZayas/Best-English-Resources"
+          >Best English Resources</a
+        >
+      </li>
+      <li>
+        <a href="https://github.com/GeroZayas/Student-Report-Generator"
+          >Student Report Generator</a
+        >
+      </li>
+      <li>
+        <a href="https://github.com/GeroZayas/Viasona-Song-Lyrics-Scraper"
+          >Viasona Song Lyrics Scraper</a
+        >
+      </li>
+      <li><a href="/projects">more -></a></li>
+    </ul>
+    <h3>What do I believe in?</h3>
+    <p class="home-info">
+      I believe in making the most out of technology without outsourcing real
+      understading and insight. I believe in constant and never ending
+      improvement through struggle and hardship while enjoying the process. I
+      believe it is fun and noble to create tools, services and products for the
+      greater good of everyone.
+    </p>
 
-  <div>
-    Find me in <i class="fa-brands fa-github"></i>
-    <a href="https://github.com/GeroZayas">Gero Zayas GitHub</a>
+    <h3>Things I love</h3>
+    <p class="home-info">
+      Real coding (nothing against AI assisted code, all against not
+      understanding). Deep insights and control. True learning. ...
+    </p>
   </div>
 
-  {% endblock %}
+  <section style="background-color: white">
+    <div id="find-me">
+      Find me on <i class="fa-brands fa-github"></i>
+      <a href="https://github.com/GeroZayas">Gero Zayas GitHub</a>
+    </div>
+  </section>
 </article>
+
+{% endblock %}
