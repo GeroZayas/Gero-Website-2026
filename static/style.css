@@ -20,9 +20,9 @@
 }
 
 :root {
-  --primary: #024a70;
-  --secondary: #2c92b8;
-  --tertiary: #ffdf20;
+  --primary: #202734;
+  --secondary: #36415A;
+  --tertiary: #F5B52E;
   --radius: 8px;
   --light-gray: #f8fafc;
   --mid-gray: #e2e8f0;
@@ -50,7 +50,7 @@ body {
 
 @media (max-width: 800px) {
   body {
-    padding: 1rem;
+    padding: 0.2rem;
   }
 }
 main {
@@ -70,6 +70,7 @@ h4,
 p {
   margin: 0.5rem 0;
   transition: margin 0.2s;
+  color: var(--secondary)
 }
 
 p:hover {
@@ -160,4 +161,10 @@ section {
   border: solid;
   padding: 0.2rem;
   border-color: var(--mid-gray);
+  border-width: 0.1rem;
+}
+
+
+.bg-variation-2 {
+    background-color: white; 
 }
