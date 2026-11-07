@@ -24,6 +24,7 @@ templates = Jinja2Templates(directory="templates")
 
 # --- ROUTES ---
 
+
 @app.get("/")
 @app.get("/home")
 def home(request: Request):
@@ -51,6 +52,19 @@ def projects(request: Request):
     context = {"message": "hello world, this is about page", "projects": projects}
     return templates.TemplateResponse(
         request=request, name="projects.html", context=context
+    )
+
+
+@app.get("/blog")
+def blog(request: Request):
+    blogs = [
+        "blog 1",
+        "blog 2",
+        "blog 3",
+    ]
+    context = {"message": "hello world, this is blog page", "blogs": blogs}
+    return templates.TemplateResponse(
+        request=request, name="blog.html", context=context
     )
 
 
