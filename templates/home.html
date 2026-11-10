@@ -1,39 +1,45 @@
 {% extends "base.html" %} {% block title %} Gero Zayas - Home {% endblock %} {%
 block content %}
 <article>
-  <div class="center-top" style="padding-top: 0.5rem">
+  <div class="flex items-center justify-center gap-4">
     <img
       style="aspect-ratio: 1; width: 5rem; height: 5rem"
       id="profile-pic-1"
       src="static/images/profile-1.png"
     />
-    <h1 id="">Gero Zayas's Web Home</h1>
+    <h1 class="text-3xl text-yellow-500">Gero Zayas's Web Home</h1>
+  </div>
+  <div class="">
+    <p
+      class="text-center text-red-700 text-xs p-2 mt-2 mb-2 border border-gray-100 rounded flex items-center justify-center"
+      id="tag-line"
+    >
+      ¿Qué bolá, asere? Let's do some programming...
+    </p>
   </div>
 
-  <div class="center-top">
-    <p id="tag-line">¿Qué bolá, asere? Let's do some programming...</p>
-  </div>
-
-  <div class="centered" id="home-personal-questions-info-section">
+  <div class="" id="home-personal-questions-info-section">
     <div class="bg-variation-1">
-      <h3>Who I am</h3>
-      <p class="home-info">
+      <h3 class="text-xl bg-slate-700 text-white p-1 rounded">Who I am</h3>
+      <p class="bg-gray-100">
         I'm <b>Gero Zayas</b>. Born in <b>Cuba</b>. Live in
         <b>Barcelona, Spain</b>. I love <b>programming</b>. I don't mind typing
         every word in the code myself.
       </p>
     </div>
-    <div class="bg-variation-2">
-      <h3>What I do</h3>
-      <p class="home-info">
+    <div class="">
+      <h3 class="text-xl bg-slate-600 text-white p-1 rounded ">What I do</h3>
+      <p class="bg-gray-100">
         I program and I <b>appreciate and respect the craft</b>. I create tools
         for education, entertainment and empowerment. I help people with
         learning and getting better at programming, engineering and creativity.
       </p>
     </div>
-    <div class="bg-variation-1">
-      <h3>What I have made</h3>
-      <ul class="home-info">
+    <div class="">
+      <h3 class="text-xl bg-slate-500 text-white p-1 rounded">
+        What I have made
+      </h3>
+      <ul class="bg-gray-100">
         <li><a href="https://github.com/GeroZayas/Dir-Diff">Dir Diff</a></li>
         <li>
           <a href="https://github.com/GeroZayas/Best-English-Resources"
@@ -53,9 +59,11 @@ block content %}
         <li><a href="/projects">more -></a></li>
       </ul>
     </div>
-    <div class="bg-variation-2">
-      <h3>What I believe</h3>
-      <p class="home-info">
+    <div class="">
+      <h3 class="text-xl bg-slate-400 text-white p-1 rounded">
+        What I believe
+      </h3>
+      <p class="bg-gray-100">
         I believe in making the most out of technology without outsourcing real
         <u>understanding</u> and <u>insight</u>. You do have to
         <u>use your brain</u>. I believe in constant and never ending
@@ -64,16 +72,16 @@ block content %}
         the greater good of everyone.
       </p>
     </div>
-    <div class="bg-variation-1">
-      <h3>Things I love</h3>
-      <p class="home-info">
+    <div class="">
+      <h3 class="text-xl bg-slate-300 text-white p-1 rounded">Things I love</h3>
+      <p class="bg-gray-100">
         Real coding (nothing against AI assisted code, everything against not
         understanding). Deep insights and control. True learning. ...
       </p>
     </div>
   </div>
 </article>
-<section style="background-color: white">
+<section class="bg-white">
   <div id="find-me">
     Find me on <i class="fa-brands fa-github"></i>
     <a href="https://github.com/GeroZayas">Gero Zayas GitHub</a>
