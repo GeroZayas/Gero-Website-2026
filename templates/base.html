@@ -7,24 +7,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content="Gero Zayas Website" />
     <link rel="icon" href="/static/images/favicon.ico" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/static/style.css" />
     <!-- Cargamos Datastar desde CDN -->
     <script
       type="module"
       src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.5/bundles/datastar.js"
     ></script>
-    <link rel="stylesheet" href="/static/style.css" />
     <script src="static/components/specialHeader.js"></script>
   </head>
   <style></style>
 
-  <body>
-    <header>
-      <div id="header-title-text">Gero Zayas's Web Home</div>
+  <body class="max-w-6xl mx-auto p-2">
+    <header class=" flex justify-between border border-gray-100 rounded ">
+      <div class="" id="header-title-text">Gero Zayas's Web Home</div>
       <nav class="normal-menu another-class">
-        <a class="header-button" href="/">Home</a>
+        <a class="header-button hover:bg-gray-200 hover:text-red-700" href="/">Home</a>
         <!-- <a href="/about">About</a> -->
-        <a class="header-button" href="/blog">Blog</a>
-        <a class="header-button" href="/projects">Projects</a>
+        <a class="header-button hover:bg-gray-200 hover:text-red-700" href="/blog">Blog</a>
+        <a class="header-button hover:bg-gray-200 hover:text-red-700" href="/projects">Projects</a>
       </nav>
     </header>
     <main>{% block content %} {% endblock %}</main>
