@@ -17,20 +17,49 @@
     <script src="static/components/specialHeader.js"></script>
   </head>
   <style></style>
-
-  <body class="max-w-6xl mx-auto p-2">
-    <header class=" flex justify-between border border-gray-100 rounded ">
+  <!-- ---------------------- BODY ---------------------- -->
+  <body class="max-w-4xl mx-auto p-2 min-h-screen flex flex-col">
+    <header class="flex justify-between border border-gray-100 rounded">
       <div class="" id="header-title-text">Gero Zayas's Web Home</div>
       <nav class="normal-menu another-class">
-        <a class="header-button hover:bg-gray-200 hover:text-red-700" href="/">Home</a>
+        <a class="header-button hover:bg-gray-200 hover:text-red-700" href="/"
+          >Home</a
+        >
         <!-- <a href="/about">About</a> -->
-        <a class="header-button hover:bg-gray-200 hover:text-red-700" href="/blog">Blog</a>
-        <a class="header-button hover:bg-gray-200 hover:text-red-700" href="/projects">Projects</a>
+        <a
+          class="header-button hover:bg-gray-200 hover:text-red-700"
+          href="/blog"
+          >Blog</a
+        >
+        <a
+          class="header-button hover:bg-gray-200 hover:text-red-700"
+          href="/projects"
+          >Projects</a
+        >
       </nav>
     </header>
-    <main>{% block content %} {% endblock %}</main>
+    <main class="flex-1">{% block content %} {% endblock %}</main>
 
-    <footer>Handmade mit Liebe by <b> Gero Zayas</b></footer>
+    <footer class="w-full">
+      <div class="">
+        <a
+          href="https://github.com/GeroZayas"
+          class="gap-2 justify-center items-center text-center bg-slate-200 hover:bg-slate-300 flex"
+          >Find me on <span class="font-bold">Gero Zayas</span>
+          <img
+            class="w-4"
+            src="/static/images/icons8-github-30.png"
+            alt=""
+          />GitHub</a
+        >
+      </div>
+
+      <div
+        class="gap-2 max-w-6xl mx-auto flex justify-center p-2 border bg-gray-800 text-yellow-500"
+      >
+        Handmade mit Liebe by <b>Gero Zayas</b>
+      </div>
+    </footer>
 
     <script src="/static/script.js"></script>
   </body>

@@ -1,7 +1,7 @@
 {% extends "base.html" %} {% block title %} Gero Zayas - Home {% endblock %} {%
 block content %}
-<article>
-  <div class="flex items-center justify-center gap-4">
+<article class="">
+  <div class="gap-2 flex items-center justify-center">
     <img
       style="aspect-ratio: 1; width: 5rem; height: 5rem"
       id="profile-pic-1"
@@ -18,45 +18,52 @@ block content %}
     </p>
   </div>
 
-  <div class="" id="home-personal-questions-info-section">
-    <div class="bg-variation-1">
+  <div
+    class="space-y-4 [&_p]:border-r [&_p]:border-l [&_p]:border-gray-200 [&_p]:p-1"
+    id="home-personal-questions-info-section"
+  >
+    <div class="">
       <h3 class="text-xl bg-slate-700 text-white p-1 rounded">Who I am</h3>
       <p class="bg-gray-100">
-        I'm <b>Gero Zayas</b>. Born in <b>Cuba</b>. Live in
+        I'm <b>Gero Zayas</b>. Born in <b>Cuba</b>. Living in
         <b>Barcelona, Spain</b>. I love <b>programming</b>. I don't mind typing
         every word in the code myself.
       </p>
     </div>
     <div class="">
-      <h3 class="text-xl bg-slate-600 text-white p-1 rounded ">What I do</h3>
+      <h3 class="text-xl bg-slate-600 text-white p-1 rounded">What I do</h3>
       <p class="bg-gray-100">
         I program and I <b>appreciate and respect the craft</b>. I create tools
         for education, entertainment and empowerment. I help people with
-        learning and getting better at programming, engineering and creativity.
+        learning and getting better at programming, learning and creating.
       </p>
     </div>
     <div class="">
       <h3 class="text-xl bg-slate-500 text-white p-1 rounded">
         What I have made
       </h3>
-      <ul class="bg-gray-100">
-        <li><a href="https://github.com/GeroZayas/Dir-Diff">Dir Diff</a></li>
-        <li>
+      <ul
+        class="bg-gray-100 list-disc pl-5 [&_li]:hover:font-bold [&_li]:hover:text-red-700"
+      >
+        <li class="">
+          <a href="https://github.com/GeroZayas/Dir-Diff">Dir Diff</a>
+        </li>
+        <li class="">
           <a href="https://github.com/GeroZayas/Best-English-Resources"
             >Best English Resources</a
           >
         </li>
-        <li>
+        <li class="">
           <a href="https://github.com/GeroZayas/Student-Report-Generator"
             >Student Report Generator</a
           >
         </li>
-        <li>
+        <li class="">
           <a href="https://github.com/GeroZayas/Viasona-Song-Lyrics-Scraper"
             >Viasona Song Lyrics Scraper</a
           >
         </li>
-        <li><a href="/projects">more -></a></li>
+        <li class=""><a href="/projects">more -></a></li>
       </ul>
     </div>
     <div class="">
@@ -81,11 +88,8 @@ block content %}
     </div>
   </div>
 </article>
-<section class="bg-white">
-  <div id="find-me">
-    Find me on <i class="fa-brands fa-github"></i>
-    <a href="https://github.com/GeroZayas">Gero Zayas GitHub</a>
-  </div>
+<section class="">
+    <div class="pt-2 pb-2"></div>
 </section>
 
 {% endblock %}
