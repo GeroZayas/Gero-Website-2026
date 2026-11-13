@@ -258,6 +258,7 @@ dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "icecream" },
     { name = "jinja2" },
+    { name = "rich" },
     { name = "ruff" },
 ]
 
@@ -267,6 +268,7 @@ requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.141.1" },
     { name = "icecream", specifier = ">=2.2.0" },
     { name = "jinja2", specifier = ">=3.1.6" },
+    { name = "rich", specifier = ">=15.0.0" },
     { name = "ruff", specifier = ">=0.16.2" },
 ]
 
