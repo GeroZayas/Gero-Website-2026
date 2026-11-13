@@ -1,4 +1,5 @@
 import os
+import sqlite3
 
 import uvicorn
 from datastar_py import ServerSentEventGenerator as SSE
@@ -18,7 +19,6 @@ from rich import print
 
 app = FastAPI(title="Gero Zayas")
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
 templates = Jinja2Templates(directory="templates")
 
 
@@ -55,16 +55,28 @@ def projects(request: Request):
     )
 
 
+blog_posts_list = {
+    "one": {"title": "The TITLE of one", "content": "The CONTENTS of one"},
+    "two": {"title": "The TITLE of two", "content": "The CONTENTS of two"},
+    "three": {"title": "The TITLE of three", "content": "The CONTENTS of three"},
+}
+
+
 @app.get("/blog")
 def blog(request: Request):
-    blogs = [
-        "blog 1",
-        "blog 2",
-        "blog 3",
-    ]
-    context = {"message": "hello world, this is blog page", "blogs": blogs}
+    context = {"message": "This is blog page", "blog_posts": blog_posts_list}
     return templates.TemplateResponse(
         request=request, name="blog.html", context=context
+    )
+
+
+@app.get("/blog/{blog_id}")
+def blog_post(blog_id: str, request: Request):
+    selected_blog = blog_posts_list[blog_id]
+    print("selected_blog:", selected_blog)
+    context = {"message": "hello world, this is blog page", "blog_post": selected_blog}
+    return templates.TemplateResponse(
+        request=request, name="blog_post.html", context=context
     )
 
 
@@ -72,7 +84,8 @@ def blog(request: Request):
 
 if __name__ == "__main__":
     uvicorn.run(
-        app,
+        "main:app",
         host="0.0.0.0",
         port=int(os.getenv("PORT", 8000)),
+        reload=True,
     )
