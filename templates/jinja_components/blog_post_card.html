@@ -1,0 +1,25 @@
+{% macro blog_post_card(link, name, description, picture, classes="flex max-w-l
+overflow-hidden rounded border border-gray-200 bg-gray-100 shadow-sm
+hover:shadow-md transition-shadow")%}
+<div class="{{classes}}">
+  <div class="w-30 shrink-0">
+    <a href="{{link}}">
+      <img
+        src="{{picture}}"
+        alt="Card image"
+        class="h-full w-full object-cover"
+      />
+    </a>
+  </div>
+
+  <div class="p-5">
+    <a
+      href="{{link}}"
+      class="text-lg font-semibold text-gray-900 hover:text-slate-600 hover:underline"
+    >
+      {{name}}
+    </a>
+    <p class="mt-2 text-sm text-gray-600">{{description}}</p>
+  </div>
+</div>
+{% endmacro %}
