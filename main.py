@@ -12,6 +12,7 @@ from fastapi.responses import (
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from icecream import ic
+from jinja2 import Environment, FileSystemLoader
 from rich import print
 
 from services.db import db
@@ -23,8 +24,16 @@ from services.db import db
 
 app = FastAPI(title="Gero Zayas")
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-
+templates = Jinja2Templates(
+    env=Environment(
+        loader=FileSystemLoader(
+            [
+                "templates",
+                "templates/jinja_components",
+            ]
+        )
+    )
+)
 
 # --- ROUTES ---
 
