@@ -1,5 +1,4 @@
 import os
-import sqlite3
 
 import uvicorn
 from datastar_py import ServerSentEventGenerator as SSE
@@ -11,6 +10,7 @@ from fastapi.responses import (
 )
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi.middleware.cors import CORSMiddleware
 from icecream import ic
 from jinja2 import Environment, FileSystemLoader
 from rich import print
@@ -35,9 +35,21 @@ templates = Jinja2Templates(
     )
 )
 
+origins = [
+    "http://localhost:8000",
+    "https://localhost:8000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
 # --- ROUTES ---
-
-
 @app.get("/")
 @app.get("/home")
 def home(request: Request):
@@ -68,13 +80,6 @@ def projects(request: Request):
     )
 
 
-blog_posts_list = {
-    "one": {"title": "The TITLE of one", "content": "The CONTENTS of one"},
-    "two": {"title": "The TITLE of two", "content": "The CONTENTS of two"},
-    "three": {"title": "The TITLE of three", "content": "The CONTENTS of three"},
-}
-
-
 @app.get("/blog")
 def blog(request: Request):
     dict_db_blog_entries = db.execute_query(db.SELECT_QUERY, ())
@@ -87,7 +92,7 @@ def blog(request: Request):
 
 @app.get("/blog/{blog_id}")
 def blog_post(blog_id: str, request: Request):
-    selected_blog = blog_posts_list[blog_id]
+    selected_blog = 2  # FIXME: change this
     print("selected_blog:", selected_blog)
     context = {"message": "hello world, this is blog page", "blog_post": selected_blog}
     return templates.TemplateResponse(
