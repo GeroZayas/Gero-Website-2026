@@ -14,6 +14,10 @@ from fastapi.templating import Jinja2Templates
 from icecream import ic
 from rich import print
 
+from services.db import db
+
+# TODO: IMPORTANT -> ADD AUTHENTICATION AND AUTHORIZATION to every path!
+
 # --- APP INIT ---
 
 
@@ -64,7 +68,9 @@ blog_posts_list = {
 
 @app.get("/blog")
 def blog(request: Request):
-    context = {"message": "This is blog page", "blog_posts": blog_posts_list}
+    dict_db_blog_entries = db.execute_query(db.SELECT_QUERY, ())
+    context = {"message": "This is blog page", "blog_posts": dict_db_blog_entries}
+
     return templates.TemplateResponse(
         request=request, name="blog.html", context=context
     )
@@ -78,6 +84,12 @@ def blog_post(blog_id: str, request: Request):
     return templates.TemplateResponse(
         request=request, name="blog_post.html", context=context
     )
+
+
+@app.get("/list-db-blog-entries")
+def list_db_blog_entries(request: Request):
+    res = db.execute_query(db.SELECT_QUERY, ())
+    return {"res": res}
 
 
 # --- EXECUTING  ---
