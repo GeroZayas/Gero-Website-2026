@@ -42,3 +42,7 @@ html {
 body {
   font-family: "Iosevka", monospace;
 }
+
+@view-transition {
+  navigation: auto;
+}
