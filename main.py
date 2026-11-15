@@ -4,13 +4,13 @@ import uvicorn
 from datastar_py import ServerSentEventGenerator as SSE
 from datastar_py.fastapi import datastar_response, read_signals
 from fastapi import Body, FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import (
     HTMLResponse,
     JSONResponse,
 )
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.middleware.cors import CORSMiddleware
 from icecream import ic
 from jinja2 import Environment, FileSystemLoader
 from rich import print
@@ -112,6 +112,6 @@ if __name__ == "__main__":
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=int(os.getenv("PORT", 8000)),
+        port=int(os.getenv("PORT", "8000")),
         reload=True,
     )
