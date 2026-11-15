@@ -1,19 +1,22 @@
-{% extends "base.html" %} 
-{% block title %} Gero Zayas - Home {% endblock %} 
+{% extends "base.html" %} {% block title %} Gero Zayas - Home {% endblock %}
+{%block content %} {% from "./jinja_components/blog_post_card.html" import
+blog_post_card %}
 
-{%block content %} 
-{% from "./jinja_components/blog_post_card.html" import blog_post_card %}
-
-<article class="">{% include "header_home.html" %}</article>
+<article class="mt-2">{% include "header_home.html" %}</article>
 <section class="">
   <div class="pt-2 pb-2 gap-4 flex flex-col">
-    {{blog_post_card("/blog", "BLOG", "My writings and explorations. Technical, personal and philosophical sometimes.", "static/images/retrosupply-jLwVAUtLOAQ-unsplash.jpg")}} 
-
-    {{blog_post_card("/projects", "PROJECTS", "A small showcase of projects I have developed or am developing.", "static/images/andras-vas-Bd7gNnWJBkU-unsplash.jpg")}} 
-    
-    {{blog_post_card("/about", "ABOUT", "Some info about me. Not that important, but if you are curious.", "static/images/leonardo-ricasoli-4F5A77mV08g-unsplash.jpg")}}
-
-    {{blog_post_card("/resources", "RESOURCES", "Collection of resources that I find useful and interesting.", "static/images/kaitlyn-baker-vZJdYl5JVXY-unsplash.jpg")}}
+    {{blog_post_card("/blog", "BLOG", "My writings and explorations. Technical,
+    personal and philosophical sometimes.",
+    "static/images/retrosupply-jLwVAUtLOAQ-unsplash.jpg")}}
+    {{blog_post_card("/projects", "PROJECTS", "A small showcase of projects I
+    have developed or am developing.",
+    "static/images/andras-vas-Bd7gNnWJBkU-unsplash.jpg")}}
+    {{blog_post_card("/about", "ABOUT", "Some info about me. Not that important,
+    but if you are curious.",
+    "static/images/leonardo-ricasoli-4F5A77mV08g-unsplash.jpg")}}
+    {{blog_post_card("/resources", "RESOURCES", "Collection of resources that I
+    find useful and interesting.",
+    "static/images/kaitlyn-baker-vZJdYl5JVXY-unsplash.jpg")}}
   </div>
 </section>
 

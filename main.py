@@ -100,6 +100,14 @@ def blog_post(blog_id: str, request: Request):
     )
 
 
+@app.get("/resources")
+def resources(request: Request):
+    context = {"message": "hello world, this is resources", "resources": {}}
+    return templates.TemplateResponse(
+        request=request, name="resources.html", context=context
+    )
+
+
 @app.get("/list-db-blog-entries")
 def list_db_blog_entries(request: Request):
     res = db.execute_query(db.SELECT_QUERY, ())
