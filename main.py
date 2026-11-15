@@ -21,7 +21,6 @@ from services.db import db
 
 # --- APP INIT ---
 
-
 app = FastAPI(title="Gero Zayas")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(
