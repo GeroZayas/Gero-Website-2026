@@ -1,17 +1,13 @@
+import json
 import os
 
 import uvicorn
 from datastar_py import ServerSentEventGenerator as SSE
-from datastar_py.fastapi import datastar_response, read_signals
+from datastar_py.fastapi import ReadSignals, datastar_response, read_signals
 from fastapi import Body, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import (
-    HTMLResponse,
-    JSONResponse,
-)
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from icecream import ic
 from jinja2 import Environment, FileSystemLoader
 from rich import print
 
@@ -29,6 +25,7 @@ templates = Jinja2Templates(
             [
                 "templates",
                 "templates/jinja_components",
+                "data/blog_posts",
             ]
         )
     )
@@ -79,6 +76,9 @@ def projects(request: Request):
     )
 
 
+# BLOG ROUTES ------------------------------------------------------------------------------
+
+
 @app.get("/blog")
 def blog(request: Request):
     dict_db_blog_entries = db.execute_query(db.SELECT_QUERY, ())
@@ -91,12 +91,48 @@ def blog(request: Request):
 
 @app.get("/blog/{blog_id}")
 def blog_post(blog_id: str, request: Request):
-    selected_blog = 2  # FIXME: change this
+    selected_blog = blog_id
     print("selected_blog:", selected_blog)
+    db.execute_query(db.READ_ROW, (blog_id,))
+
     context = {"message": "hello world, this is blog page", "blog_post": selected_blog}
     return templates.TemplateResponse(
         request=request, name="blog_post.html", context=context
     )
+
+
+@app.get("/blog-post-creator")
+async def blog_post_creator(request: Request):
+    context = {"message": "hello world, this is blog page", "blog_post": ""}
+    return templates.TemplateResponse(
+        request=request, name="blog_post_creator.html", context=context
+    )
+
+
+@app.post("/blog-post-creator-submit-content")
+async def blog_post_creator_print_signals(signals: ReadSignals):
+    print("*" * 100)
+    title = (signals.get("blogPostCreatorTitle")).strip()  # type: ignore
+    content = (signals.get("blogPostCreatorContent")).strip()  # type: ignore
+    tags = [e.strip() for e in (signals.get("blogPostCreatorTags")).split(",")]  # type: ignore
+    lang = signals.get("blogPostCreatorLang").strip()  # type: ignore
+
+    print(title)
+    print(content)
+    print(tags)
+    print(lang)
+    new_blog_post_data = {
+        "title": title,
+        "content": content,
+        "tags": ",".join(tags),
+        "lang": lang.upper(),
+    }
+    res_insert = db.insert_row_to_db(data=new_blog_post_data)
+    print(res_insert)
+    print("*" * 100)
+
+
+# end of BLOG ROUTES ------------------------------------------------------------------------------
 
 
 @app.get("/resources")

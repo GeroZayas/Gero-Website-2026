@@ -26,13 +26,15 @@ log.info("scratch buffer iniciado")
 # =======================================================================================
 SELECT_QUERY = "SELECT * FROM {table_name}"
 
+READ_ROW = "SELECT * FROM {table_name} WHERE id = ?"
+
 INSERT_ROW_QUERY = """
-INSERT INTO {table_name} (title, content) VALUES (?, ?)
+INSERT INTO {table_name} (title, content, tags, lang) VALUES (?, ?, ?, ?)
 """
 
 UPDATE_ROW_QUERY = """
 UPDATE {table_name}
-SET title = ?, content = ?
+SET title = ?, content = ?, tags = ?, lang = ?, 
 WHERE id = ?
 """
 
@@ -83,9 +85,15 @@ def execute_query(query: str, values: tuple):
 
 
 def insert_row_to_db(data: dict):
-    title, content = data["title"], data["content"]
+    title, content, tags, lang = (
+        data["title"],
+        data["content"],
+        data["tags"],
+        data["lang"],
+    )
     res = execute_query(
-        INSERT_ROW_QUERY.format(table_name=db_settings["table_name"]), (title, content)
+        INSERT_ROW_QUERY.format(table_name=db_settings["table_name"]),
+        (title, content, tags, lang),
     )
     return {"return insert": res}
 
@@ -110,18 +118,46 @@ def delete_row_in_db(row_id: int):
 def main():
     execute_query(SELECT_QUERY, ())
     print("=" * 80)
-    row_id_input = int(input("INSERT ROW ID: "))
-    # new_title_input = input("INSERT TITLE: ")
-    # new_content_input = input("INSERT CONTENT: ")
-    # data = {
-    #     "title": new_title_input,
-    #     "content": new_content_input,
-    # }
-    # res_insert = insert_row_to_db(data)
+    user_choice = input("i - insert, u - update, d - delete, q - exit: ")
     print("=" * 80)
-    # res_update = update_row_in_db(row_id=row_id_input, data=data)
-    res_delete = delete_row_in_db(row_id=row_id_input)
-    print(res_delete)
+
+    if user_choice == "i":
+        new_title_input = input("INSERT TITLE: ")
+        new_content_input = input("INSERT CONTENT: ")
+        new_tags_input = input("INSERT TAGS (separated by commas): ")
+        new_lang_input = input("INSERT LANG: ")
+        data = {
+            "title": new_title_input,
+            "content": new_content_input,
+            "tags": new_tags_input,
+            "lang": new_lang_input,
+        }
+        res_insert = insert_row_to_db(data)
+        print(res_insert)
+    elif user_choice == "u":
+        row_id_input = int(input("INSERT ROW ID: "))
+        new_title_input = input("INSERT TITLE: ")
+        new_content_input = input("INSERT CONTENT: ")
+        data = {
+            "title": new_title_input,
+            "content": new_content_input,
+        }
+        res_update = update_row_in_db(row_id=row_id_input, data=data)
+        print(res_update)
+
+    elif user_choice == "d":
+        row_id_input = int(input("INSERT ROW ID: "))
+        res_delete = delete_row_in_db(row_id=row_id_input)
+        print(res_delete)
+
+    elif user_choice == "q":
+        print("BYE BYE")
+        exit()
+
+    else:
+        print("COMMAND NOT AVAILABLE")
+
+    print("=" * 80)
     return 0
 
 
