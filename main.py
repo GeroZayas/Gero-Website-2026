@@ -13,10 +13,16 @@ from rich import print
 
 from services.db import db
 
+# ================= NOTES GERO TO DO, FIX ME and ELSE ===============================================
+
 # TODO: IMPORTANT -> ADD AUTHENTICATION AND AUTHORIZATION to every path!
+# TODO: ADD Cache for operations related to DB and others :)
+# TODO: In Blog route, the description of the blog post, -> render that correctly as HTML, not MD
+
+# ===================================================================================================
+
 
 # --- APP INIT ---
-
 app = FastAPI(title="Gero Zayas")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(
@@ -108,9 +114,9 @@ async def blog_post_creator(request: Request):
         request=request, name="blog_post_creator.html", context=context
     )
 
-
+@datastar_response
 @app.post("/blog-post-creator-submit-content")
-async def blog_post_creator_print_signals(signals: ReadSignals):
+async def blog_post_creator_insert_new_post(signals: ReadSignals):
     print("*" * 100)
     title = (signals.get("blogPostCreatorTitle")).strip()  # type: ignore
     content = (signals.get("blogPostCreatorContent")).strip()  # type: ignore
@@ -129,7 +135,25 @@ async def blog_post_creator_print_signals(signals: ReadSignals):
     }
     res_insert = db.insert_row_to_db(data=new_blog_post_data)
     print(res_insert)
+    # TODO: add a patch signals piece of logic to see confirmation in the frontend
     print("*" * 100)
+
+# EXAMPLE FROM DOCS:
+# ------------------
+# @app.get('/do-you-read-me')
+# @datastar_response
+# async def open_doors(request):
+#     yield SSE.patch_signals({"hal": "Affirmative, Dave. I read you."})
+#     await asyncio.sleep(1)
+#     yield SSE.patch_signals({"hal": "..."})
+
+
+@app.post("/blog-post-creator-delete-post/{blog_id}")
+async def blog_post_creator_delete(blog_id: int, request: Request):
+    res_delete = db.delete_row_in_db(row_id=blog_id)
+    print(res_delete)
+    # TODO: add a patch signals piece of logic to see confirmation in the frontend
+    return {"status": "OK", "action_completed": f"deleted blog id: {blog_id}"}
 
 
 # end of BLOG ROUTES ------------------------------------------------------------------------------

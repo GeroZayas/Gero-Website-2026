@@ -6,10 +6,24 @@ blog_post_card %}
 <div class="mt-2 mb-2">
     <h1 class="text-3xl">Blog</h1>
 </div>
+
+<br>
+<div>
+    <a class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" href="/blog-post-creator">Create new
+        blog post</a>
+    </a>
+
+    <button data-on:click="@post('/blog-post-creator-delete-post/' + $blogPostIdDelete); window.location.reload();" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete Post</button>
+    <input data-bind:blog-post-id-delete type="number">
+
+</div>
+<br>
+
 <div class="flex flex-col gap-3">
     {% for post in blog_posts %}
 
-    {{blog_post_card(post["id"], post["title"], post["content"][:140], "static/images/aleksandr-zaitsev-Crl1DzTGzDU-unsplash.jpg", post["created_at"])}}
+    {{blog_post_card(post["id"], post["title"], post["content"][:140],
+    "static/images/aleksandr-zaitsev-Crl1DzTGzDU-unsplash.jpg", post["created_at"])}}
 
     {% endfor %}
 </div>
