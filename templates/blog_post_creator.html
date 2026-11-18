@@ -1,0 +1,34 @@
+{% extends "base.html" %} {% block title %} Blog {% endblock %} {% block content
+%}
+
+
+<div class="mt-2 mb-2">
+    <h1 class="text-3xl">CREATE A NEW BLOG POST</h1>
+</div>
+
+<div class="flex flex-col gap-3">
+    <h3 class="text-2xl text-slate-500">INSERT TITLE</h3>
+    <input data-bind:blog-post-creator-title id="blog-post-creator-title" type="text"
+        class="w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+
+    <h3 class="text-2xl text-slate-700">INSERT CONTENT</h3>
+    <textarea data-bind:blog-post-creator-content id="blog-post-creator-content" placeholder="Content..."
+        class="w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </textarea>
+
+    <h3 class="text-2xl text-red-500">INSERT TAGS (separated by commas)</h3>
+    <input data-bind:blog-post-creator-tags id="blog-post-creator-tags" type="text"
+        class="w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+    <h3 class="text-2xl text-red-700">INSERT LANGUAGE (ES, EN)</h3>
+    <input data-bind:blog-post-creator-lang id="blog-post-creator-lang" type="text"
+        class="w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 placeholder:text-slate-400 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+    <!-- ---------------- SUBMIT BUTTON ---------------- -->
+    <button class="w-50 bg-slate-500 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded"
+        data-on:click="@post('/blog-post-creator-submit-content')">Submit</button>
+
+</div>
+
+{% endblock %}
