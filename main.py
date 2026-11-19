@@ -114,6 +114,7 @@ async def blog_post_creator(request: Request):
         request=request, name="blog_post_creator.html", context=context
     )
 
+
 @datastar_response
 @app.post("/blog-post-creator-submit-content")
 async def blog_post_creator_insert_new_post(signals: ReadSignals):
@@ -137,6 +138,7 @@ async def blog_post_creator_insert_new_post(signals: ReadSignals):
     print(res_insert)
     # TODO: add a patch signals piece of logic to see confirmation in the frontend
     print("*" * 100)
+
 
 # EXAMPLE FROM DOCS:
 # ------------------
@@ -176,9 +178,14 @@ def list_db_blog_entries(request: Request):
 # --- EXECUTING  ---
 
 if __name__ == "__main__":
+    port = input("INSERT PORT (leave blank for 8000): ")
+    if port.strip() == "":
+        PORT = "8000"
+    else:
+        PORT = port
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=int(os.getenv("PORT", "8000")),
+        port=int(os.getenv("PORT", PORT)),
         reload=True,
     )
