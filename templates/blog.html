@@ -7,17 +7,7 @@ blog_post_card %}
     <h1 class="text-3xl">Blog</h1>
 </div>
 
-<br>
-<div>
-    <a class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" href="/blog-post-creator">Create new
-        blog post</a>
-    </a>
-
-    <button data-on:click="@post('/blog-post-creator-delete-post/' + $blogPostIdDelete); window.location.reload();" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Delete Post</button>
-    <input data-bind:blog-post-id-delete type="number">
-
-</div>
-<br>
+{% include "create_delete_post.html" %}
 
 <div class="flex flex-col gap-3">
     {% for post in blog_posts %}
