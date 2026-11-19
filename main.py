@@ -178,11 +178,7 @@ def list_db_blog_entries(request: Request):
 # --- EXECUTING  ---
 
 if __name__ == "__main__":
-    port = input("INSERT PORT (leave blank for 8000): ")
-    if port.strip() == "":
-        PORT = "8000"
-    else:
-        PORT = port
+    PORT = "8000"
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
