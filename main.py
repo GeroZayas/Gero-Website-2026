@@ -12,6 +12,7 @@ from jinja2 import Environment, FileSystemLoader
 from rich import print
 
 from services.db import db
+from services.markdown_html_factory import md_html_factory as md_html
 
 # ================= NOTES GERO TO DO, FIX ME and ELSE ===============================================
 
@@ -99,9 +100,15 @@ def blog(request: Request):
 def blog_post(blog_id: str, request: Request):
     selected_blog = blog_id
     print("selected_blog:", selected_blog)
-    db.execute_query(db.READ_ROW, (blog_id,))
-
-    context = {"message": "hello world, this is blog page", "blog_post": selected_blog}
+    res = db.execute_query(db.READ_ROW, (blog_id,), read_one=True)
+    post = res[0]  # type: ignore
+    html = md_html.render_markdown_html(source=post["content"])
+    blog_post = {
+        "title": post["title"],
+        "content": html,
+    }
+    print("RES:", res)
+    context = {"message": "hello world, this is blog page", "blog_post": blog_post}
     return templates.TemplateResponse(
         request=request, name="blog_post.html", context=context
     )

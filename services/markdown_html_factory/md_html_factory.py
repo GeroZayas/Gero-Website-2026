@@ -21,13 +21,17 @@ def render_markdown_html(source):
     return md.convert(source)
 
 
-src = ""
+def main():
+    src = ""
 
-with open("data/blog_posts/test.md", "r") as file:
-    src = file.read()
+    with open("data/blog_posts/test.md", "r") as file:
+        src = file.read()
 
-html = render_markdown_html(source=src)
+    html = render_markdown_html(source=src)
+    with open("test.html", "w") as file:
+        file.write(html)
+        print(f"WROTE {len(html)} into file.")
 
-with open("test.html", "w") as file:
-    file.write(html)
-    print(f"WROTE {len(html)} into file.")
+
+if __name__ == "__main__":
+    main()

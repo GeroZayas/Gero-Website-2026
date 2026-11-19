@@ -53,6 +53,8 @@ def print_rows_from_db_result(rows_list: list[sqlite3.Row]):
         print("ID".ljust(15, "."), row["id"])
         print("TITLE".ljust(15, "."), row["title"])
         print("CONTENT".ljust(15, "."), row["content"])
+        print("TAGS".ljust(15, "."), row["tags"])
+        print("LANG".ljust(15, "."), row["lang"])
         print("CREATED AT".ljust(15, "."), row["created_at"])
         print("UPDATED AT".ljust(15, "."), row["updated_at"], end="\n\n")
 
@@ -60,13 +62,13 @@ def print_rows_from_db_result(rows_list: list[sqlite3.Row]):
 # =======================================================================================
 # Main PROCs
 # =======================================================================================
-def execute_query(query: str, values: tuple):
+def execute_query(query: str, values: tuple, read_one=False):
     """Returns ROWS of executed query if any"""
     with closing(sqlite3.connect(db_settings["path"])) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         log.info("Cursor creado")
-        if values:
+        if values and read_one == False:
             # with conn: -> makes it like conn.commit() if success or ROLLBACK if fail
             with conn:
                 cursor.execute(
@@ -74,8 +76,19 @@ def execute_query(query: str, values: tuple):
                 )
                 log.debug("Cursor Ejecutado %s", cursor.rowcount)
                 return cursor.rowcount
+        elif read_one == True:
+            with conn:
+                cursor.execute(
+                    query.format(table_name=db_settings["table_name"]), values
+                )
+                rows_list = cursor.fetchall()
+                print(rows_list)
+                print_rows_from_db_result(rows_list)
+                log.debug("Cursor Ejecutado %s", cursor.rowcount)
+                return rows_list
+
         else:
-            # QUERY JUST FOR READING DATA
+            # QUERY JUST FOR READING ALL DATA
             with conn:
                 cursor.execute(query.format(table_name=db_settings["table_name"]))
                 rows_list = cursor.fetchall()
