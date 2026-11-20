@@ -1,14 +1,14 @@
-{% macro blog_post_card(link, title, sample, picture, created_at,
-    classes="flex max-w-l overflow-hidden rounded border border-gray-100 shadow-sm hover:shadow-md transition-shadow bg-white"
+{% macro blog_post_card(link, title, tags, picture, created_at,
+    classes="items-center flex max-w-l overflow-hidden rounded border border-gray-100 shadow-sm hover:shadow-md transition-shadow bg-white"
     )%}
 
 <div class="{{classes}}">
-  <div class="w-30 shrink-0">
+  <div class="lg:w-40 w-30 shrink-0">
     <a href="blog/{{link}}">
       <img
         src="{{picture}}"
         alt="Card image"
-        class="aspect-square object-cover object-center"
+        class="aspect-square object-cover object-center transition-transform duration-300 hover:scale-105"
       />
     </a>
   </div>
@@ -16,12 +16,12 @@
   <div class="md:p-5 p-2">
     <a
       href="blog/{{link}}"
-      class="text-2xl text-red-700 hover:text-red-900 hover:underline"
+      class="lg:text-2xl text-md text-red-700 hover:text-red-900 hover:underline"
     >
       {{title}}
     </a>
-    <p class="mt-2 text-sm text-gray-600">{{sample}}...</p>
-    <p class="text-sm text-yellow-600">{{created_at}}</p>
+    <p class="mt-2 lg:text-sm text-xs text-gray-600">{{tags}}</p>
+    <p class="lg:text-sm text-xs text-yellow-600">{{created_at}}</p>
   </div>
 </div>
 {% endmacro %}

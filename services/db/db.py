@@ -82,8 +82,8 @@ def execute_query(query: str, values: tuple, read_one=False):
                     query.format(table_name=db_settings["table_name"]), values
                 )
                 rows_list = cursor.fetchall()
-                print(rows_list)
-                print_rows_from_db_result(rows_list)
+                # print(rows_list)
+                # print_rows_from_db_result(rows_list)
                 log.debug("Cursor Ejecutado %s", cursor.rowcount)
                 return rows_list
 
@@ -93,7 +93,7 @@ def execute_query(query: str, values: tuple, read_one=False):
                 cursor.execute(query.format(table_name=db_settings["table_name"]))
                 rows_list = cursor.fetchall()
                 log.debug("Cursor Ejecutado %s", cursor.rowcount)
-                print_rows_from_db_result(rows_list)
+                # print_rows_from_db_result(rows_list)
                 return rows_list
 
 

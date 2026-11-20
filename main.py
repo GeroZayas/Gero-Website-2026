@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Literal
 
 import uvicorn
 from datastar_py import ServerSentEventGenerator as SSE
@@ -19,6 +20,27 @@ from services.markdown_html_factory import md_html_factory as md_html
 # TODO: IMPORTANT -> ADD AUTHENTICATION AND AUTHORIZATION to every path!
 # TODO: ADD Cache for operations related to DB and others :)
 # TODO: In Blog route, the description of the blog post, -> render that correctly as HTML, not MD
+
+# ===================================================================================================
+
+
+# UTILITIES
+# ===================================================================================================
+def print_sep(to_print: str | list) -> Literal[0]:
+    is_str = isinstance(to_print, str)
+    is_list = isinstance(to_print, list)
+    if is_str:
+        print("=" * 120)
+        print(to_print)
+        print("=" * 120)
+    elif is_list:
+        print("=" * 120)
+        for e in to_print:
+            print(e)
+        print("=" * 120)
+
+    return 0
+
 
 # ===================================================================================================
 
@@ -141,6 +163,9 @@ async def blog_post_creator_insert_new_post(signals: ReadSignals):
         "tags": ",".join(tags),
         "lang": lang.upper(),
     }
+
+    print_sep(tags)
+
     res_insert = db.insert_row_to_db(data=new_blog_post_data)
     print(res_insert)
     # TODO: add a patch signals piece of logic to see confirmation in the frontend
