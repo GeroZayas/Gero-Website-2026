@@ -1,6 +1,6 @@
 import logging
 import sqlite3
-from contextlib import closing
+from contextlib import closing, contextmanager
 from functools import lru_cache
 from pathlib import Path
 from types import MappingProxyType
@@ -29,14 +29,14 @@ log.info("scratch buffer iniciado")
 # =======================================================================================
 SELECT_QUERY = "SELECT * FROM {table_name}"
 
-READ_ROW = "SELECT * FROM {table_name} WHERE id = ?"  # ***
+READ_ROW = "SELECT * FROM {table_name} WHERE id = ?"
 
 # BLOG QUERRIES /////////////////////////////////////////////////////////////////////////
 INSERT_ROW_QUERY = """
 INSERT INTO {table_name} (title, content, tags, lang) VALUES (?, ?, ?, ?)
 """
 
-# ***A
+
 UPDATE_ROW_QUERY = """
 UPDATE {table_name}
 SET title = ?, content = ?, tags = ?, lang = ? 
@@ -49,13 +49,14 @@ WHERE id = ?
 """
 
 # PROJECT QUERRIES //////////////////////////////////////////////////////////////////////
+# ***
 CREATE_TABLE_PROJECTS_QUERY = """
 CREATE TABLE projects (
     id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     tags TEXT,
     link TEXT,
-    description TEXT,
+    description TEXT
 );
 """
 
@@ -80,6 +81,14 @@ def print_rows_from_db_result(rows_list: list[sqlite3.Row]):
         print("UPDATED AT".ljust(15, "."), row["updated_at"], end="\n\n")
 
 
+@contextmanager
+def handle_db_operational_errors():
+    try:
+        yield
+    except Exception as e:
+        print(Panel(f"[ERROR] {e}", style="red"))
+
+
 # =======================================================================================
 # Main PROCs
 # =======================================================================================
@@ -92,12 +101,12 @@ def execute_query(query: str, values: tuple, table: str, read_one=False):
         log.info("Cursor creado")
         if values and read_one == False:
             # with conn: -> makes it like conn.commit() if success or ROLLBACK if fail
-            with conn:
+            with conn, handle_db_operational_errors():
                 cursor.execute(query.format(table_name=table), values)
                 log.debug("Cursor Ejecutado %s", cursor.rowcount)
                 return cursor.rowcount
-        elif read_one == True:  # ***
-            with conn:
+        elif read_one == True:
+            with conn, handle_db_operational_errors():
                 cursor.execute(query.format(table_name=table), values)
                 rows_list = cursor.fetchall()
                 # print(rows_list)
@@ -105,9 +114,10 @@ def execute_query(query: str, values: tuple, table: str, read_one=False):
                 log.debug("Cursor Ejecutado %s", cursor.rowcount)
                 return rows_list
 
+        # ELSE READ ALL
         else:
             # QUERY JUST FOR READING ALL DATA
-            with conn:
+            with conn, handle_db_operational_errors():
                 cursor.execute(query.format(table_name=table))
                 rows_list = cursor.fetchall()
                 log.debug("Cursor Ejecutado %s", cursor.rowcount)
@@ -139,7 +149,7 @@ def update_row_in_blog_db(row_id: int, data: dict):
         data["lang"],
     )
     res = execute_query(
-        query=UPDATE_ROW_QUERY,  # ***A
+        query=UPDATE_ROW_QUERY,
         table="gero_blog",
         values=(title, content, tags, lang, row_id),
     )
@@ -153,16 +163,32 @@ def delete_row_in_blog_db(row_id: int):
     return {"return delete": res}
 
 
+# PROJECTS TABLES
+# ***
+def create_projects_table():
+    res = execute_query(CREATE_TABLE_PROJECTS_QUERY, values=(), table="projects")
+    print(
+        "EXECUTING -> execute_query(CREATE_TABLE_PROJECTS_QUERY, values=(), table='projects')"
+    )
+    return {"res": res}
+
+
+def show_user_options():
+    print(
+        Panel(
+            "Choose action:\n\tct - create table,\n\tr - read all entries,\n\tr1 - read one,\n\ti - insert,\n\tu - update,\n\td - delete,\n\tq - exit: ",
+            title="Choose action",
+            border_style="yellow",
+        )
+    )
+
+
+# TABLES PROCEDURES ///////////////////////////////////////////////////////////////////////////////
 def table_blog():
     running = True
     while running:
-        print(
-            Panel(
-                "Choose action: r - read all entries, r1 - read one, i - insert, u - update, d - delete, q - exit: ",
-                title="Choose action",
-                border_style="yellow",
-            )
-        )
+        show_user_options()
+
         user_choice = input(">>> ")
         print("=" * 80)
 
@@ -186,7 +212,7 @@ def table_blog():
             row_id_input = input("INSERT ROW ID: ")
             execute_query(
                 READ_ROW, table="gero_blog", values=(row_id_input,), read_one=True
-            )  # ***
+            )
             print("=" * 80)
         elif user_choice == "u":
             row_id_input = int(input("INSERT ROW ID: "))
@@ -219,6 +245,17 @@ def table_blog():
 
 
 def table_project():
+    running = True
+    while running:
+        show_user_options()
+        user_choice = input(">>> ")
+        if user_choice == "ct":
+            create_projects_table()
+        elif user_choice == "q":
+            print("BYE BYE")
+            running = False
+
+    print("=" * 80)
     return
 
 
