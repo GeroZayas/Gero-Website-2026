@@ -43,6 +43,12 @@ def print_sep(to_print: str | list) -> Literal[0]:
     return 0
 
 
+def write_to_log_file(data: str):
+    with open("log.log", "a+") as log_file:
+        log_file.write(data)
+    return {"message": "WROTE to LOG FILE"}
+
+
 # ===================================================================================================
 
 
@@ -74,27 +80,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(
-    GZipMiddleware, minimum_size=500
-)
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
     response = await call_next(request)
-    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+    response.headers["Strict-Transport-Security"] = (
+        "max-age=63072000; includeSubDomains"
+    )
     response.headers["X-Content-Type-Options"] = "nosnif"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe eval' https://cdn.jsdelivr.net; "
+        "script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; "
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
         "img-src 'self' data:; "
         "connect-src 'self'; "
         "frame-ancestors 'none'; "
     )
     return response
-    
+
 
 # --- ROUTES ---
 @app.get("/")
@@ -133,6 +139,13 @@ def projects(request: Request):
 @app.get("/blog")
 def blog(request: Request):
     dict_db_blog_entries = db.execute_query(db.SELECT_QUERY, ())
+    log_message = """
+    CALLING:
+    `dict_db_blog_entries`
+    Opening DB and READING from it.
+    """
+
+    write_to_log_file(log_message)
     context = {"message": "This is blog page", "blog_posts": dict_db_blog_entries}
 
     return templates.TemplateResponse(
@@ -145,6 +158,14 @@ def blog_post(blog_id: str, request: Request):
     selected_blog = blog_id
     print("selected_blog:", selected_blog)
     res = db.execute_query(db.READ_ROW, (blog_id,), read_one=True)
+
+    log_message = """
+    CALLING:
+    `db.execute_query(db.READ_ROW, (blog_id,), read_one=True)`
+    Opening DB and READING from it.
+    """
+    write_to_log_file(log_message)
+
     post = res[0]  # type: ignore
     html = md_html.render_markdown_html(source=post["content"])
     blog_post = {
@@ -189,6 +210,14 @@ async def blog_post_creator_insert_new_post(signals: ReadSignals):
     print_sep(tags)
 
     res_insert = db.insert_row_to_db(data=new_blog_post_data)
+
+    log_message = """
+    CALLING:
+    `db.insert_row_to_db(data=new_blog_post_data)`
+    Opening DB and WRITING to it.
+    """
+    write_to_log_file(log_message)
+
     print(res_insert)
     # TODO: add a patch signals piece of logic to see confirmation in the frontend
     print("*" * 100)
