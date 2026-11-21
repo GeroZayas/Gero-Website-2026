@@ -138,7 +138,9 @@ def projects(request: Request):
 
 @app.get("/blog")
 def blog(request: Request):
-    dict_db_blog_entries = db.execute_query(db.SELECT_QUERY, ())
+    dict_db_blog_entries = db.execute_query(
+        db.SELECT_QUERY, table="gero_blog", values=()
+    )
     print("*" * 100)
     print(dict_db_blog_entries)
     print("*" * 100)
@@ -236,7 +238,7 @@ def resources(request: Request):
 
 @app.get("/list-db-blog-entries")
 def list_db_blog_entries(request: Request):
-    res = db.execute_query(db.SELECT_QUERY, ())
+    res = db.execute_query(db.SELECT_QUERY, table="gero_blog", values=())
     return {"res": res}
 
 
