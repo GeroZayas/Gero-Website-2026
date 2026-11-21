@@ -1,9 +1,9 @@
 {% macro blog_post_card(link, title, tags, picture, created_at,
-    classes="items-center flex max-w-l overflow-hidden rounded border border-gray-100 shadow-sm hover:shadow-md transition-shadow bg-white"
+    classes="items-center flex max-w-l overflow-hidden rounded bg-slate-50"
     )%}
 
 <div class="{{classes}}">
-  <div class="lg:w-40 w-30 shrink-0">
+  <div class="w-20 shrink-0">
     <a href="blog/{{link}}">
       <img
         src="{{picture}}"
@@ -13,10 +13,10 @@
     </a>
   </div>
 
-  <div class="md:p-5 p-2">
+  <div class="md:p-2 p-2">
     <a
       href="blog/{{link}}"
-      class="lg:text-2xl text-md text-red-700 hover:text-red-900 hover:underline"
+      class="lg:text-1xl font-bold text-md text-red-700 hover:text-red-900 hover:underline"
     >
       {{title}}
     </a>
