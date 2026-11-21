@@ -48,13 +48,12 @@ WHERE id = ?
 # =======================================================================================
 # UTILS procs
 # =======================================================================================
-@lru_cache(maxsize=128)
 def print_rows_from_db_result(rows_list: list[sqlite3.Row]):
     for i, row in enumerate(rows_list, 1):
         print(f" ROW {i} ".center(40, "="))
         print("ID".ljust(15, "."), row["id"])
         print("TITLE".ljust(15, "."), row["title"])
-        print("CONTENT".ljust(15, "."), row["content"])
+        # print("CONTENT".ljust(15, "."), row["content"])
         print("TAGS".ljust(15, "."), row["tags"])
         print("LANG".ljust(15, "."), row["lang"])
         print("CREATED AT".ljust(15, "."), row["created_at"])

@@ -139,13 +139,10 @@ def projects(request: Request):
 @app.get("/blog")
 def blog(request: Request):
     dict_db_blog_entries = db.execute_query(db.SELECT_QUERY, ())
-    log_message = """
-    CALLING:
-    `dict_db_blog_entries`
-    Opening DB and READING from it.
-    """
+    print("*" * 100)
+    print(dict_db_blog_entries)
+    print("*" * 100)
 
-    write_to_log_file(log_message)
     context = {"message": "This is blog page", "blog_posts": dict_db_blog_entries}
 
     return templates.TemplateResponse(
@@ -155,24 +152,9 @@ def blog(request: Request):
 
 @app.get("/blog/{blog_id}")
 def blog_post(blog_id: str, request: Request):
-    selected_blog = blog_id
-    print("selected_blog:", selected_blog)
-    res = db.execute_query(db.READ_ROW, (blog_id,), read_one=True)
-
-    log_message = """
-    CALLING:
-    `db.execute_query(db.READ_ROW, (blog_id,), read_one=True)`
-    Opening DB and READING from it.
-    """
-    write_to_log_file(log_message)
-
-    post = res[0]  # type: ignore
-    html = md_html.render_markdown_html(source=post["content"])
     blog_post = {
-        "title": post["title"],
-        "content": html,
+        "id": blog_id,
     }
-    print("RES:", res)
     context = {"message": "hello world, this is blog page", "blog_post": blog_post}
     return templates.TemplateResponse(
         request=request, name="blog_post.html", context=context

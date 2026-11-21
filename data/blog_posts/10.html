@@ -1,0 +1,64 @@
+{% raw %}
+<h1 id="clone-a-github-project-with-all-branches-and-all-files">Clone a GitHub project with all branches and all files</h1>
+<p>To clone a GitHub project with <strong>all branches and all files</strong>, follow these steps:</p>
+<h2 id="1-clone-the-repository">1. Clone the Repository</h2>
+<p>This command downloads the entire repository, including all branches, commits, and files:</p>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>clone<span class="w"> </span>&lt;url&gt;
+</code></pre></div>
+
+<h2 id="2-see-all-remote-branches">2. See All Remote Branches</h2>
+<p>After cloning, navigate into the repository directory:</p>
+<div class="codehilite"><pre><span></span><code><span class="nb">cd</span><span class="w"> </span>
+git<span class="w"> </span>branch<span class="w"> </span>-a
+</code></pre></div>
+
+<p>This lists all local and remote branches. By default, only the main branch is checked out locally; other branches are present as remote-tracking branches.</p>
+<h2 id="3-create-local-branches-for-all-remotes-optional">3. Create Local Branches for All Remotes (Optional)</h2>
+<p>If you want to have <strong>all branches as local branches</strong> (not just remote-tracking), you can automate this with a shell loop:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">for</span><span class="w"> </span>branch<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">$(</span>git<span class="w"> </span>branch<span class="w"> </span>-r<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span><span class="s1">&#39;\-&gt;&#39;</span><span class="k">)</span><span class="p">;</span><span class="w"> </span><span class="k">do</span>
+<span class="w">  </span>git<span class="w"> </span>branch<span class="w"> </span>--track<span class="w"> </span><span class="s2">&quot;</span><span class="si">${</span><span class="nv">branch</span><span class="p">#origin/</span><span class="si">}</span><span class="s2">&quot;</span><span class="w"> </span><span class="s2">&quot;</span><span class="nv">$branch</span><span class="s2">&quot;</span><span class="w"> </span><span class="m">2</span>&gt;/dev/null
+<span class="k">done</span>
+</code></pre></div>
+
+<p>This creates local branches that track each remote branch.</p>
+<h2 id="4-fetch-all-updates">4. Fetch All Updates</h2>
+<p>To make sure all branch data is up to date:</p>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>fetch<span class="w"> </span>--all
+</code></pre></div>
+
+<p>This ensures your local repository has the latest data for all branches.</p>
+<hr />
+<p><strong>Summary Table</strong></p>
+<table>
+<thead>
+<tr>
+<th>Step</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clone repo (all files/branches)</td>
+<td><code>git clone</code></td>
+</tr>
+<tr>
+<td>List all branches</td>
+<td><code>git branch -a</code></td>
+</tr>
+<tr>
+<td>Create all local branches</td>
+<td><code>for branch in $(git branch -r | grep -v '\-&gt;'); do git branch --track "${branch#origin/}" "$branch" 2&gt;/dev/null; done</code></td>
+</tr>
+<tr>
+<td>Fetch all data</td>
+<td><code>git fetch --all</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Key Points</strong>
+- <code>git clone</code> downloads all files, commits, and branch data, but only checks out the default branch locally.
+- All other branches are available as remote-tracking branches and can be checked out locally as needed.
+- Automate local branch creation with a shell loop if you need all branches checked out locally.</p>
+<p>This is the most efficient and standard way to clone a GitHub project with all branches and files.</p>
+{% endraw %}

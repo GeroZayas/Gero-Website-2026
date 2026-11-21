@@ -1,0 +1,39 @@
+{% raw %}
+<h1 id="til-grep-v">TIl grep -v</h1>
+<p><code>grep -v</code> means <strong>invert match</strong>.</p>
+<p>It prints <strong>all lines that do NOT match</strong> the given pattern.</p>
+<h3 id="syntax">Syntax</h3>
+<div class="codehilite"><pre><span></span><code>grep<span class="w"> </span>-v<span class="w"> </span><span class="s2">&quot;pattern&quot;</span><span class="w"> </span>file
+</code></pre></div>
+
+<h3 id="example">Example</h3>
+<div class="codehilite"><pre><span></span><code>grep<span class="w"> </span>-v<span class="w"> </span><span class="s2">&quot;ERROR&quot;</span><span class="w"> </span>app.log
+</code></pre></div>
+
+<p>→ shows every line <strong>except</strong> those containing <code>ERROR</code>.</p>
+<h3 id="common-uses">Common uses</h3>
+<ul>
+<li>Remove comments:</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>grep<span class="w"> </span>-v<span class="w"> </span><span class="s1">&#39;^#&#39;</span><span class="w"> </span>config.conf
+</code></pre></div>
+
+<ul>
+<li>Remove blank lines:</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>grep<span class="w"> </span>-v<span class="w"> </span><span class="s1">&#39;^$&#39;</span><span class="w"> </span>file.txt
+</code></pre></div>
+
+<ul>
+<li>Chain filters (poor man’s data pipeline):</li>
+</ul>
+<div class="codehilite"><pre><span></span><code>ps<span class="w"> </span>aux<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>-v<span class="w"> </span>root
+</code></pre></div>
+
+<h3 id="mental-model">Mental model</h3>
+<blockquote>
+<p><code>grep</code> = keep matches
+<code>grep -v</code> = <strong>delete matches</strong></p>
+</blockquote>
+<p>That’s it. Simple, brutal, effective.</p>
+{% endraw %}

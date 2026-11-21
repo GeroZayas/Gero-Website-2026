@@ -1,0 +1,172 @@
+{% raw %}
+<h1 id="jinja2-components-in-different-directories">Jinja2: Components in Different Directories</h1>
+<blockquote>
+<p><strong>Golden Rule</strong>: <code>render()</code> always resolves paths <strong>relative to the loader roots</strong>, never the filesystem directly. Register all your template dirs in the loader, then use <code>include</code>/<code>import</code> with paths relative to those roots.</p>
+</blockquote>
+<hr />
+<h2 id="1-tell-environment-where-to-look-multiple-dirs">1. Tell <code>Environment</code> Where to Look (Multiple Dirs)</h2>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">FileSystemLoader</span>
+
+<span class="n">env</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span>
+    <span class="n">loader</span><span class="o">=</span><span class="n">FileSystemLoader</span><span class="p">([</span>
+        <span class="s2">&quot;templates&quot;</span><span class="p">,</span>             <span class="c1"># main templates</span>
+        <span class="s2">&quot;templates/components&quot;</span><span class="p">,</span>  <span class="c1"># partials/components</span>
+        <span class="s2">&quot;shared/templates&quot;</span><span class="p">,</span>      <span class="c1"># templates from another dir, even outside the project</span>
+    <span class="p">])</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>The loader searches them <strong>in order</strong>; first match wins.</p>
+<hr />
+<h2 id="2-use-include-or-import-in-any-template">2. Use <code>{% include %}</code> or <code>{% import %}</code> in Any Template</h2>
+<p><code>base.html</code> (in <code>templates/</code>):</p>
+<div class="codehilite"><pre><span></span><code><span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+  {% include &quot;header.html&quot; %}          {# found in templates/components/ #}
+  {% block content %}{% endblock %}
+  {% include &quot;footer.html&quot; %}
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre></div>
+
+<p><code>header.html</code> (in <code>templates/components/</code>) — just plain HTML/vars:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">&lt;</span><span class="nt">header</span><span class="p">&gt;&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>{{ title }}<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;&lt;/</span><span class="nt">header</span><span class="p">&gt;</span>
+</code></pre></div>
+
+<hr />
+<h2 id="3-variables-and-context">3. Variables and Context</h2>
+<div class="codehilite"><pre><span></span><code>{% include &quot;header.html&quot; %}   {# default: parent vars ARE visible #}
+</code></pre></div>
+
+<p>An included fragment sees the same variables as the template that includes it. No explicit passing needed.</p>
+<hr />
+<h2 id="4-reusable-functions-macros">4. Reusable "Functions": Macros</h2>
+<p>Want something callable with explicit arguments instead of a fragment? Use a <strong>macro</strong>:</p>
+<p><code>templates/components/macros.html</code>:</p>
+<div class="codehilite"><pre><span></span><code>{% macro card(title, body) %}
+  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;card&quot;</span><span class="p">&gt;&lt;</span><span class="nt">h2</span><span class="p">&gt;</span>{{ title }}<span class="p">&lt;/</span><span class="nt">h2</span><span class="p">&gt;&lt;</span><span class="nt">p</span><span class="p">&gt;</span>{{ body }}<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+{% endmacro %}
+</code></pre></div>
+
+<p>Use it from any template:</p>
+<div class="codehilite"><pre><span></span><code>{% from &quot;macros.html&quot; import card %}
+{{ card(&quot;Hello&quot;, &quot;Some text&quot;) }}
+</code></pre></div>
+
+<hr />
+<h2 id="5-rule-of-thumb">5. Rule of Thumb</h2>
+<table>
+<thead>
+<tr>
+<th>Construct</th>
+<th>What it does</th>
+<th>When to use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{% include "file.html" %}</code></td>
+<td>Pastes a fragment (sees parent variables)</td>
+<td>Static/repeated chunks: header, footer</td>
+</tr>
+<tr>
+<td><code>{% from "macros.html" import macro %}</code></td>
+<td>Calls a macro like a function (explicit args)</td>
+<td>Parameterized components: cards, buttons</td>
+</tr>
+<tr>
+<td><code>{% extends "base.html" %}</code> + <code>{% block %}</code></td>
+<td>Inheritance: child fills blocks of a base</td>
+<td>Page layouts</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-rendering">6. Rendering</h2>
+<div class="codehilite"><pre><span></span><code><span class="n">env</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="s2">&quot;base.html&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Home&quot;</span><span class="p">)</span>  <span class="c1"># not &quot;templates/base.html&quot;</span>
+</code></pre></div>
+
+<p>Paths passed to <code>get_template()</code> / <code>include</code> / <code>import</code> are <strong>relative to the loader roots</strong> registered in <code>FileSystemLoader</code>, not to the project filesystem.</p>
+<hr />
+<h2 id="7-fastapi-same-jinja2-wrapped">7. FastAPI: Same Jinja2, Wrapped</h2>
+<p>Con FastAPI es igual, solo cambia cómo se crea el entorno. FastAPI envuelve Jinja2 con <code>Jinja2Templates</code>:</p>
+<h3 id="configurar-la-app-mainpy">Configurar la app (main.py)</h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">fastapi</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastAPI</span><span class="p">,</span> <span class="n">Request</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">fastapi.templating</span><span class="w"> </span><span class="kn">import</span> <span class="n">Jinja2Templates</span>
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">FastAPI</span><span class="p">()</span>
+
+<span class="c1"># Caso simple: un solo directorio</span>
+<span class="n">templates</span> <span class="o">=</span> <span class="n">Jinja2Templates</span><span class="p">(</span><span class="n">directory</span><span class="o">=</span><span class="s2">&quot;templates&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Para <strong>múltiples directorios</strong>, <code>FileSystemLoader</code> ya acepta una lista — no necesitas nada más:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">Environment</span><span class="p">,</span> <span class="n">FileSystemLoader</span>
+
+<span class="n">templates</span> <span class="o">=</span> <span class="n">Jinja2Templates</span><span class="p">(</span>
+    <span class="n">env</span><span class="o">=</span><span class="n">Environment</span><span class="p">(</span><span class="n">loader</span><span class="o">=</span><span class="n">FileSystemLoader</span><span class="p">([</span>
+        <span class="s2">&quot;templates&quot;</span><span class="p">,</span>              <span class="c1"># páginas: base.html, index.html</span>
+        <span class="s2">&quot;templates/components&quot;</span><span class="p">,</span>   <span class="c1"># componentes: header.html, macros.html</span>
+    <span class="p">]))</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<blockquote>
+<p><strong><code>ChoiceLoader</code> solo si mezclas tipos de loaders</strong> (filesystem + package + custom) o quieres prioridad entre grupos enteros. Con la lista simple de <code>FileSystemLoader</code>, la precedencia es archivo por archivo: mismo nombre en dos dirs → gana el dir que aparece primero en la lista.</p>
+</blockquote>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Caso avanzado: mezclar tipos de loaders</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jinja2</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChoiceLoader</span><span class="p">,</span> <span class="n">PackageLoader</span>
+
+<span class="n">env</span> <span class="o">=</span> <span class="n">Environment</span><span class="p">(</span><span class="n">loader</span><span class="o">=</span><span class="n">ChoiceLoader</span><span class="p">([</span>
+    <span class="n">FileSystemLoader</span><span class="p">(</span><span class="s2">&quot;templates/overrides&quot;</span><span class="p">),</span>  <span class="c1"># tus overrides primero</span>
+    <span class="n">PackageLoader</span><span class="p">(</span><span class="s2">&quot;mi_app&quot;</span><span class="p">,</span> <span class="s2">&quot;templates&quot;</span><span class="p">),</span>     <span class="c1"># defaults de un paquete instalado</span>
+<span class="p">]))</span>
+</code></pre></div>
+
+<h3 id="estructura-tipica">Estructura típica</h3>
+<div class="codehilite"><pre><span></span><code>app/
+├── main.py
+└── templates/
+    ├── base.html
+    ├── index.html
+    └── components/
+        ├── header.html
+        └── macros.html
+</code></pre></div>
+
+<h3 id="endpoint">Endpoint</h3>
+<div class="codehilite"><pre><span></span><code><span class="nd">@app</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">home</span><span class="p">(</span><span class="n">request</span><span class="p">:</span> <span class="n">Request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">templates</span><span class="o">.</span><span class="n">TemplateResponse</span><span class="p">(</span>
+        <span class="n">request</span><span class="o">=</span><span class="n">request</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;index.html&quot;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;title&quot;</span><span class="p">:</span> <span class="s2">&quot;Home&quot;</span><span class="p">}</span>
+    <span class="p">)</span>
+</code></pre></div>
+
+<blockquote>
+<p><strong>Ojo</strong>: la ruta es <strong>relativa a los loader roots</strong> (<code>"index.html"</code>, nunca <code>"templates/index.html"</code>).</p>
+</blockquote>
+<h3 id="en-las-plantillas-igual-que-jinja2-puro">En las plantillas, igual que Jinja2 puro</h3>
+<div class="codehilite"><pre><span></span><code>{# templates/index.html #}
+{% extends &quot;base.html&quot; %}
+{% from &quot;components/macros.html&quot; import card %}
+
+{% block content %}
+  {% include &quot;components/header.html&quot; %}
+  {{ card(&quot;Hola&quot;, &quot;texto&quot;) }}
+{% endblock %}
+</code></pre></div>
+
+<blockquote>
+<p><strong>Nota</strong>: en FastAPI los includes/macro-imports funcionan idéntico a Jinja2 puro. La única diferencia FastAPI-specific es el <code>request</code> en el contexto — disponible automáticamente en todas las plantillas, incluidos los includes.</p>
+</blockquote>
+<hr />
+<h2 id="summary">Summary</h2>
+<ul>
+<li>Multiple paths in the loader → Jinja searches them in order.</li>
+<li><code>{% include %}</code> = paste a fragment (parent context visible).</li>
+<li><code>{% import %}</code>/<code>{% from %}</code> = call macros like functions (explicit args).</li>
+<li>Always reference templates by path relative to the loader roots.</li>
+<li>FastAPI: <code>Jinja2Templates(env=Environment(loader=FileSystemLoader(["dir1", "dir2"])))</code> para múltiples dirs; <code>TemplateResponse(request=request, name=..., context=...)</code> en los endpoints.</li>
+<li><code>ChoiceLoader</code> solo para mezclar tipos de loaders distintos (filesystem + package + custom).</li>
+</ul>
+{% endraw %}

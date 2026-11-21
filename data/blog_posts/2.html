@@ -1,0 +1,584 @@
+{% raw %}
+<h1 id="sqlite3-in-python-data-oriented-procedural-programming">SQLite3 in Python: Data Oriented &amp; Procedural Programming</h1>
+<blockquote>
+<p><strong>Golden Rule</strong>: The database is an I/O boundary. Data goes in plain, data comes out plain. Functions transform data. Never wrap rows in objects.</p>
+</blockquote>
+<hr />
+<h2 id="1-the-mindset">1. The Mindset</h2>
+<p>In Data Oriented Programming (DOP), we care about:</p>
+<ul>
+<li><strong>Plain data</strong>: <code>dict</code>, <code>tuple</code>, <code>list</code>, <code>namedtuple</code> — never custom classes</li>
+<li><strong>Functions that transform data</strong>: <code>f(data) -&gt; new_data</code></li>
+<li><strong>Separating I/O from logic</strong>: Query the DB → get plain data → process → write back</li>
+</ul>
+<div class="codehilite"><pre><span></span><code><span class="c1"># BAD (OOP)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">User</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span> <span class="o">...</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
+
+<span class="c1"># GOOD (DOP)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_user</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_user</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+</code></pre></div>
+
+<hr />
+<h2 id="2-the-connection-cursor">2. The Connection &amp; Cursor</h2>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">closing</span>
+
+<span class="c1"># The basic I/O function pattern</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">with_db</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute fn(cursor) inside a transaction, then commit.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">path</span><span class="p">))</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;PRAGMA foreign_keys = ON&quot;</span><span class="p">)</span>  <span class="c1"># Always enable FKs</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">cursor</span><span class="p">)</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">result</span>
+</code></pre></div>
+
+<p><strong>Critical</strong>: Always enable <code>PRAGMA foreign_keys = ON</code>. SQLite disables foreign key enforcement by default for backward compatibility.</p>
+<hr />
+<h2 id="3-row-factory-the-most-important-feature-for-dop">3. Row Factory: The Most Important Feature for DOP</h2>
+<p>By default, <code>sqlite3</code> returns rows as <strong>tuples</strong>. This is fragile—you access data by index.</p>
+<h3 id="option-a-sqlite3row-lightweight-dict-like">Option A: <code>sqlite3.Row</code> (Lightweight, Dict-like)</h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">closing</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">fetch_users</span><span class="p">(</span><span class="n">db_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span><span class="p">]:</span>
+    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">db_path</span><span class="p">))</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>  <span class="c1"># &lt;-- KEY LINE</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT id, name, email FROM users&quot;</span><span class="p">)</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">rows</span>
+
+<span class="c1"># Usage: rows behave like dicts AND tuples</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>      <span class="c1"># Dict-like access</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>           <span class="c1"># Tuple index access</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>        <span class="c1"># Convert to plain dict when needed</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">row</span><span class="p">))</span>       <span class="c1"># Convert to tuple</span>
+</code></pre></div>
+
+<p><strong>Why <code>sqlite3.Row</code>?</strong></p>
+<ul>
+<li>Memory efficient (stores data once, not copied into dict)</li>
+<li>Supports key lookup by column name</li>
+<li>Immutable (good for DOP)</li>
+<li>Easy to convert: <code>dict(row)</code>, <code>tuple(row)</code></li>
+</ul>
+<h3 id="option-b-dict-factory-true-dicts">Option B: Dict Factory (True Dicts)</h3>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">dict_factory</span><span class="p">(</span><span class="n">cursor</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return rows as plain dictionaries.&quot;&quot;&quot;</span>
+    <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">column</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">column</span> <span class="ow">in</span> <span class="n">cursor</span><span class="o">.</span><span class="n">description</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">fields</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
+
+<span class="c1"># Usage</span>
+<span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">dict_factory</span>
+</code></pre></div>
+
+<p><strong>When to use which?</strong></p>
+<ul>
+<li>Use <code>sqlite3.Row</code> for most cases (fast, lightweight)</li>
+<li>Use <code>dict_factory</code> only if you need to mutate the row or serialize to JSON immediately</li>
+</ul>
+<hr />
+<h2 id="4-parameterized-queries-never-concatenate-sql">4. Parameterized Queries (NEVER Concatenate SQL)</h2>
+<div class="codehilite"><pre><span></span><code><span class="c1"># NEVER DO THIS</span>
+<span class="n">user_input</span> <span class="o">=</span> <span class="s2">&quot;Robert&#39;); DROP TABLE users; --&quot;</span>
+<span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SELECT * FROM users WHERE name = &#39;</span><span class="si">{</span><span class="n">user_input</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span>  <span class="c1"># SQL INJECTION!</span>
+
+<span class="c1"># ALWAYS DO THIS: Use ? placeholders</span>
+<span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users WHERE name = ? AND age &gt; ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">user_input</span><span class="p">,</span> <span class="mi">18</span><span class="p">))</span>
+
+<span class="c1"># For IN clauses, use multiple placeholders</span>
+<span class="n">names</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="s2">&quot;Charlie&quot;</span><span class="p">)</span>
+<span class="n">placeholders</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;?&quot;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">))</span>
+<span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SELECT * FROM users WHERE name IN (</span><span class="si">{</span><span class="n">placeholders</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">names</span><span class="p">)</span>
+
+<span class="c1"># For dynamic columns/ordering, validate against a whitelist</span>
+<span class="n">ALLOWED_COLUMNS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;email&quot;</span><span class="p">,</span> <span class="s2">&quot;created_at&quot;</span><span class="p">}</span>
+<span class="n">sort_col</span> <span class="o">=</span> <span class="n">user_input_sort</span>
+<span class="k">if</span> <span class="n">sort_col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ALLOWED_COLUMNS</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Invalid sort column: </span><span class="si">{</span><span class="n">sort_col</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SELECT * FROM users ORDER BY </span><span class="si">{</span><span class="n">sort_col</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Rule</strong>: <code>?</code> for values. Whitelist validation for identifiers (column/table names).</p>
+<hr />
+<h2 id="5-transactions">5. Transactions</h2>
+<p>SQLite transactions are implicit but dangerous if misunderstood:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># Implicit transaction: DML statements (INSERT/UPDATE/DELETE) auto-start a transaction</span>
+<span class="c1"># Explicit control is better:</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">transfer_funds</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">from_id</span><span class="p">,</span> <span class="n">to_id</span><span class="p">,</span> <span class="n">amount</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Use conn as context manager for automatic commit/rollback.&quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">conn</span><span class="p">:</span>  <span class="c1"># Commits on success, ROLLBACK on exception</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE accounts SET balance = balance - ? WHERE id = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">amount</span><span class="p">,</span> <span class="n">from_id</span><span class="p">))</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE accounts SET balance = balance + ? WHERE id = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">amount</span><span class="p">,</span> <span class="n">to_id</span><span class="p">))</span>
+    <span class="c1"># Automatically committed here</span>
+</code></pre></div>
+
+<p>Key behaviors:</p>
+<ul>
+<li><code>sqlite3.connect()</code> doesn't auto-commit by default (unless <code>isolation_level=None</code>)</li>
+<li>A connection context manager (<code>with conn:</code>) wraps in a transaction</li>
+<li>DDL (CREATE TABLE, etc.) sometimes auto-commits depending on SQLite version</li>
+</ul>
+<hr />
+<h2 id="6-creating-tables-schema-procedural">6. Creating Tables &amp; Schema (Procedural)</h2>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">init_schema</span><span class="p">(</span><span class="n">conn</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Idempotent schema setup. Run it every time on startup.&quot;&quot;&quot;</span>
+    <span class="n">schema</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    CREATE TABLE IF NOT EXISTS users (</span>
+<span class="s2">        id      INTEGER PRIMARY KEY AUTOINCREMENT,</span>
+<span class="s2">        name    TEXT NOT NULL,</span>
+<span class="s2">        email   TEXT UNIQUE,</span>
+<span class="s2">        meta    TEXT DEFAULT &#39;</span><span class="si">{}</span><span class="s2">&#39;,  -- Store JSON as TEXT</span>
+<span class="s2">        created INTEGER DEFAULT (unixepoch())</span>
+<span class="s2">    ) STRICT;  -- SQLite 3.37+: STRICT prevents type affinity gotchas</span>
+
+<span class="s2">    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">executescript</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Notes</strong>:</p>
+<ul>
+<li>Use <code>IF NOT EXISTS</code> for idempotency</li>
+<li><code>STRICT</code> table option (SQLite 3.37+) enforces types properly</li>
+<li>Store JSON in <code>TEXT</code> columns; parse in your functions</li>
+</ul>
+<hr />
+<h2 id="7-crud-as-pure-functions">7. CRUD as Pure Functions</h2>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="c1"># --- CREATE ---</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">insert_user</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">email</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">meta</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the new row id.&quot;&quot;&quot;</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;INSERT INTO users (name, email, meta) VALUES (?, ?, ?)&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">email</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">meta</span> <span class="ow">or</span> <span class="p">{}))</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">lastrowid</span>
+
+<span class="c1"># --- READ ---</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_user_by_id</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">dict_factory</span>  <span class="c1"># Or sqlite3.Row</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users WHERE id = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">user_id</span><span class="p">,))</span>
+    <span class="n">row</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># Reset if needed</span>
+    <span class="k">if</span> <span class="n">row</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="n">row</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;meta&quot;</span><span class="p">):</span>
+        <span class="n">row</span><span class="p">[</span><span class="s2">&quot;meta&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">&quot;meta&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">row</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">list_users</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">offset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;SELECT id, name, email, created FROM users ORDER BY created DESC LIMIT ? OFFSET ?&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">limit</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
+
+<span class="c1"># --- UPDATE ---</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">update_user_email</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">new_email</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns number of rows modified.&quot;&quot;&quot;</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;UPDATE users SET email = ? WHERE id = ?&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="n">new_email</span><span class="p">,</span> <span class="n">user_id</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">rowcount</span>
+
+<span class="c1"># --- DELETE ---</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">delete_user</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;DELETE FROM users WHERE id = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">user_id</span><span class="p">,))</span>
+    <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">rowcount</span>
+</code></pre></div>
+
+<hr />
+<h2 id="8-bulk-operations-executemany">8. Bulk Operations (executemany)</h2>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">bulk_insert_users</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">users_data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    users_data: [(&quot;Alice&quot;, &quot;alice@example.com&quot;), (&quot;Bob&quot;, &quot;bob@example.com&quot;), ...]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span>
+        <span class="s2">&quot;INSERT INTO users (name, email) VALUES (?, ?)&quot;</span><span class="p">,</span>
+        <span class="n">users_data</span>
+    <span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_from_csv</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">filepath</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="nb">next</span><span class="p">(</span><span class="n">reader</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># Skip header</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">executemany</span><span class="p">(</span><span class="s2">&quot;INSERT INTO users (name, email) VALUES (?, ?)&quot;</span><span class="p">,</span> <span class="n">reader</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>Performance tip</strong>: Wrap bulk inserts in a transaction (the <code>with conn:</code> block). SQLite can do 50k+ inserts/second in a transaction vs. ~50/second in auto-commit.</p>
+<hr />
+<h2 id="9-working-with-json-dop-friendly">9. Working with JSON (DOP Friendly)</h2>
+<p>SQLite has JSON support (enable with <code>json1</code> extension, usually built-in):</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">find_user_by_meta_key</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Query inside JSON column using SQLite json_extract.&quot;&quot;&quot;</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+        <span class="s2">&quot;SELECT * FROM users WHERE json_extract(meta, ?) = ?&quot;</span><span class="p">,</span>
+        <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;$.</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()]</span>
+
+<span class="c1"># Or extract data in SQL</span>
+<span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    SELECT</span>
+<span class="s2">        id,</span>
+<span class="s2">        name,</span>
+<span class="s2">        json_extract(meta, &#39;$.department&#39;) as dept</span>
+<span class="s2">    FROM users</span>
+<span class="s2">    WHERE json_extract(meta, &#39;$.active&#39;) = true</span>
+<span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<hr />
+<h2 id="10-type-conversions-sqlite-python">10. Type Conversions (SQLite ↔ Python)</h2>
+<p>SQLite is dynamically typed. Python's <code>sqlite3</code> maps:</p>
+<table>
+<thead>
+<tr>
+<th>SQLite</th>
+<th>Python</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NULL</td>
+<td>None</td>
+</tr>
+<tr>
+<td>INTEGER</td>
+<td>int</td>
+</tr>
+<tr>
+<td>REAL</td>
+<td>float</td>
+</tr>
+<tr>
+<td>TEXT</td>
+<td>str</td>
+</tr>
+<tr>
+<td>BLOB</td>
+<td>bytes</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Custom adapters/converters</strong> (use sparingly):</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+
+<span class="c1"># Store datetime as ISO 8601 text</span>
+<span class="n">sqlite3</span><span class="o">.</span><span class="n">register_adapter</span><span class="p">(</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">dt</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">isoformat</span><span class="p">())</span>
+<span class="n">sqlite3</span><span class="o">.</span><span class="n">register_converter</span><span class="p">(</span><span class="s2">&quot;timestamp&quot;</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">decode</span><span class="p">()))</span>
+
+<span class="c1"># Connect with detect_types to enable converters</span>
+<span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">,</span> <span class="n">detect_types</span><span class="o">=</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">PARSE_DECLTYPES</span><span class="p">)</span>
+</code></pre></div>
+
+<p><strong>DOP preference</strong>: Don't use adapters. Store dates as <code>INTEGER</code> (unixepoch) or <code>TEXT</code> (ISO 8601), and convert in your functions explicitly. Less magic, more transparency.</p>
+<hr />
+<h2 id="11-advanced-custom-functions-in-sql">11. Advanced: Custom Functions in SQL</h2>
+<p>Register Python functions to use inside SQL queries:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">regexp</span><span class="p">(</span><span class="n">pattern</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+<span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>
+<span class="n">conn</span><span class="o">.</span><span class="n">create_function</span><span class="p">(</span><span class="s2">&quot;REGEXP&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">regexp</span><span class="p">)</span>
+
+<span class="c1"># Now use in SQL</span>
+<span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users WHERE name REGEXP ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^A.*&quot;</span><span class="p">,))</span>
+</code></pre></div>
+
+<hr />
+<h2 id="12-the-complete-pattern-a-small-module">12. The Complete Pattern: A Small Module</h2>
+<div class="codehilite"><pre><span></span><code><span class="sd">&quot;&quot;&quot;users_db.py — Pure procedural SQLite module.&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">closing</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="n">DB_PATH</span> <span class="o">=</span> <span class="s2">&quot;app.db&quot;</span>
+
+<span class="c1"># --- Schema ---</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_db</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">path</span><span class="p">))</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">executescript</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            CREATE TABLE IF NOT EXISTS users (</span>
+<span class="s2">                id INTEGER PRIMARY KEY AUTOINCREMENT,</span>
+<span class="s2">                name TEXT NOT NULL,</span>
+<span class="s2">                email TEXT UNIQUE,</span>
+<span class="s2">                score REAL DEFAULT 0.0</span>
+<span class="s2">            ) STRICT;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+
+<span class="c1"># --- Queries ---</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">add_user</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">email</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">path</span><span class="p">))</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;INSERT INTO users (name, email) VALUES (?, ?)&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">email</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">lastrowid</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_leaderboard</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">top_n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span><span class="p">]:</span>
+    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">path</span><span class="p">))</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">Row</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+            <span class="s2">&quot;SELECT name, score FROM users ORDER BY score DESC LIMIT ?&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">top_n</span><span class="p">,)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+
+<span class="c1"># --- Usage ---</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">init_db</span><span class="p">(</span><span class="n">DB_PATH</span><span class="p">)</span>
+    <span class="n">uid</span> <span class="o">=</span> <span class="n">add_user</span><span class="p">(</span><span class="n">DB_PATH</span><span class="p">,</span> <span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="s2">&quot;alice@example.com&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created user </span><span class="si">{</span><span class="n">uid</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">get_leaderboard</span><span class="p">(</span><span class="n">DB_PATH</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">row</span><span class="p">[</span><span class="s1">&#39;score&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<hr />
+<h2 id="13-critical-gotchas">13. Critical Gotchas</h2>
+<ol>
+<li>
+<p><strong>SQLite is single-writer</strong>: Only one transaction can write at a time. Others wait or get <code>BUSY</code> errors. Use <code>timeout</code> parameter: <code>sqlite3.connect(path, timeout=30.0)</code></p>
+</li>
+<li>
+<p><strong>WAL mode for concurrency</strong>:</p>
+</li>
+</ol>
+<p><code>python
+   conn.execute("PRAGMA journal_mode=WAL")</code></p>
+<p>This lets readers proceed while a writer is active.</p>
+<ol>
+<li>
+<p><strong>Bytestrings vs strings</strong>: <code>sqlite3</code> returns TEXT as <code>str</code> in Python 3. In Python 2, this was a mess. You're using Python 3, so no issue.</p>
+</li>
+<li>
+<p><strong>NULL handling</strong>: <code>cursor.fetchone()</code> returns <code>None</code> if no row found. Check before accessing!</p>
+</li>
+<li>
+<p><strong>Rowcount is unreliable</strong> for <code>SELECT</code> in some SQLite versions. Don't depend on it for reads.</p>
+</li>
+</ol>
+<hr />
+<h2 id="14-logging-procedural">14. Logging (Procedural)</h2>
+<p>El módulo <code>logging</code> usa objetos por dentro, pero tú lo usas de forma <strong>totalmente procedural</strong>: llamas funciones, pasas datos, listo.</p>
+<h3 id="lo-minimo-esencial">Lo mínimo esencial</h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+    <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> </span><span class="si">%(levelname)s</span><span class="s2"> </span><span class="si">%(message)s</span><span class="s2">&quot;</span>
+<span class="p">)</span>
+
+<span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;App iniciada&quot;</span><span class="p">)</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Falta el archivo de config, usando defaults&quot;</span><span class="p">)</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Fallo al escribir en la base de datos&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Niveles estándar, de menos a más grave:</p>
+<table>
+<thead>
+<tr>
+<th>Nivel</th>
+<th>Cuándo usarlo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DEBUG</code></td>
+<td>Detalles para diagnosticar (valores de variables, SQL ejecutado)</td>
+</tr>
+<tr>
+<td><code>INFO</code></td>
+<td>Eventos normales ("usuario creado", "migración completada")</td>
+</tr>
+<tr>
+<td><code>WARNING</code></td>
+<td>Algo raro pero recuperable ("reintento 2 de 3")</td>
+</tr>
+<tr>
+<td><code>ERROR</code></td>
+<td>Una operación falló</td>
+</tr>
+<tr>
+<td><code>CRITICAL</code></td>
+<td>El programa no puede continuar</td>
+</tr>
+</tbody>
+</table>
+<h3 id="nunca-uses-f-strings-en-los-mensajes">Nunca uses f-strings en los mensajes</h3>
+<p>El módulo hace el formateo <strong>solo si el mensaje llega a emitirse</strong>. Con f-strings pagas el costo siempre:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># MAL: la string se construye aunque DEBUG esté desactivado</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Filas procesadas: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># BIEN: los args se pasan sin tocar, se formatean solo si se emite</span>
+<span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Filas procesadas: </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rows</span><span class="p">))</span>
+</code></pre></div>
+
+<h3 id="configuracion-procedural-reutilizable">Configuración procedural reutilizable</h3>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">setup_logging</span><span class="p">(</span><span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;INFO&quot;</span><span class="p">,</span> <span class="n">log_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configura el logging una vez al inicio. Sin clases, solo datos.&quot;&quot;&quot;</span>
+    <span class="n">fmt</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> | </span><span class="si">%(levelname)-8s</span><span class="s2"> | </span><span class="si">%(name)s</span><span class="s2"> | </span><span class="si">%(message)s</span><span class="s2">&quot;</span>
+    <span class="n">handlers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">logging</span><span class="o">.</span><span class="n">Handler</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="n">log_file</span><span class="p">:</span>
+        <span class="n">handlers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="n">log_file</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">logging</span><span class="p">,</span> <span class="n">level</span><span class="o">.</span><span class="n">upper</span><span class="p">()),</span>
+        <span class="nb">format</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
+        <span class="n">handlers</span><span class="o">=</span><span class="n">handlers</span><span class="p">,</span>
+    <span class="p">)</span>
+</code></pre></div>
+
+<p>En el punto de entrada:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="n">setup_logging</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span> <span class="n">log_file</span><span class="o">=</span><span class="s2">&quot;app.log&quot;</span><span class="p">)</span>
+    <span class="n">init_db</span><span class="p">(</span><span class="n">DB_PATH</span><span class="p">)</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Base de datos inicializada en </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">DB_PATH</span><span class="p">)</span>
+    <span class="o">...</span>
+</code></pre></div>
+
+<h3 id="loggers-por-modulo-nombres-no-clases">Loggers por módulo (nombres, no clases)</h3>
+<p>En vez del logger raíz, cada módulo obtiene el suyo con su nombre — así sabes <em>de dónde</em> viene cada mensaje:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># users_db.py</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>   <span class="c1"># se llamará &quot;users_db&quot;</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">add_user</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">email</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;INSERT user name=</span><span class="si">%s</span><span class="s2"> email=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">email</span><span class="p">)</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;INSERT INTO users (name, email) VALUES (?, ?)&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">email</span><span class="p">))</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Usuario creado id=</span><span class="si">%d</span><span class="s2"> name=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cursor</span><span class="o">.</span><span class="n">lastrowid</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cursor</span><span class="o">.</span><span class="n">lastrowid</span>
+</code></pre></div>
+
+<p>Salida:</p>
+<div class="codehilite"><pre><span></span><code><span class="m">2025</span>-01-15<span class="w"> </span><span class="m">10</span>:32:01<span class="w"> </span><span class="p">|</span><span class="w"> </span>INFO<span class="w">     </span><span class="p">|</span><span class="w"> </span>users_db<span class="w"> </span><span class="p">|</span><span class="w"> </span>Usuario<span class="w"> </span>creado<span class="w"> </span><span class="nv">id</span><span class="o">=</span><span class="m">42</span><span class="w"> </span><span class="nv">name</span><span class="o">=</span>Alice
+</code></pre></div>
+
+<h3 id="loguear-excepciones-exc_info-o-exception">Loguear excepciones: <code>exc_info</code> o <code>exception()</code></h3>
+<p>Dentro de un <code>except</code>, esto incluye el traceback completo automáticamente:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">transfer</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">from_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">to_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">amount</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE accounts SET balance = balance - ? WHERE id = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">amount</span><span class="p">,</span> <span class="n">from_id</span><span class="p">))</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE accounts SET balance = balance + ? WHERE id = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">amount</span><span class="p">,</span> <span class="n">to_id</span><span class="p">))</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">IntegrityError</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Transferencia fallida de </span><span class="si">%d</span><span class="s2"> a </span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">from_id</span><span class="p">,</span> <span class="n">to_id</span><span class="p">)</span>  <span class="c1"># loguea el traceback</span>
+        <span class="k">return</span> <span class="kc">False</span>
+</code></pre></div>
+
+<h3 id="reglas-de-oro-especialmente-con-sqlite">Reglas de oro (especialmente con SQLite)</h3>
+<ol>
+<li><strong>Nunca loguees secrets</strong>: passwords, tokens, datos personales. Loguea el <code>id</code>, no el contenido.</li>
+<li><strong>Loguea los parámetros SQL, no concatenes SQL</strong>: <code>log.debug("query=%s params=%s", sql, params)</code> — nunca <code>log.debug("SELECT ... WHERE name = '%s'" % name)</code>.</li>
+<li><strong>DEBUG en desarrollo, INFO en producción</strong>, con variable de entorno:</li>
+</ol>
+<p><code>python
+   import os
+   setup_logging(level=os.environ.get("LOG_LEVEL", "INFO"))</code></p>
+<ol>
+<li><strong>Los logs no son tu base de datos</strong>: para datos que necesitas consultar, usa una tabla SQLite (<code>CREATE TABLE events (...)</code>). Los logs son para humanos leyendo texto.</li>
+<li><strong>El logger es thread-safe por diseño</strong>: varios hilos pueden escribir sin corromper las líneas.</li>
+</ol>
+<h3 id="el-patron-completo-procedural">El patrón completo procedural</h3>
+<div class="codehilite"><pre><span></span><code><span class="sd">&quot;&quot;&quot;app.py — punto de entrada&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">users_db</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="n">users_db</span><span class="o">.</span><span class="n">setup_logging</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="s2">&quot;INFO&quot;</span><span class="p">,</span> <span class="n">log_file</span><span class="o">=</span><span class="s2">&quot;app.log&quot;</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Inicio de la app, args=</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">users_db</span><span class="o">.</span><span class="n">init_db</span><span class="p">(</span><span class="n">users_db</span><span class="o">.</span><span class="n">DB_PATH</span><span class="p">)</span>
+        <span class="n">uid</span> <span class="o">=</span> <span class="n">users_db</span><span class="o">.</span><span class="n">add_user</span><span class="p">(</span><span class="n">users_db</span><span class="o">.</span><span class="n">DB_PATH</span><span class="p">,</span> <span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="s2">&quot;alice@example.com&quot;</span><span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Flujo completado, user_id=</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">uid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">&quot;Error fatal, saliendo&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">1</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+
+<p><strong>Resumen</strong>: <code>setup_logging()</code> una vez al inicio → <code>log = logging.getLogger(__name__)</code> en cada módulo → <code>log.info/debug/warning/error("... %s", dato)</code> en los puntos clave.</p>
+<hr />
+<h2 id="summary-checklist">Summary Checklist</h2>
+<table>
+<thead>
+<tr>
+<th>Practice</th>
+<th>Why</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>conn.row_factory = sqlite3.Row</code></td>
+<td>Get named data without objects</td>
+</tr>
+<tr>
+<td><code>?</code> placeholders</td>
+<td>Prevent SQL injection</td>
+</tr>
+<tr>
+<td><code>with conn:</code> / <code>conn.commit()</code></td>
+<td>Proper transactions</td>
+</tr>
+<tr>
+<td><code>executemany()</code></td>
+<td>Fast bulk inserts</td>
+</tr>
+<tr>
+<td><code>PRAGMA foreign_keys = ON</code></td>
+<td>Enforce referential integrity</td>
+</tr>
+<tr>
+<td>Functions return plain data</td>
+<td>Dicts, tuples, lists — never User() objects</td>
+</tr>
+<tr>
+<td>Separate I/O from logic</td>
+<td>Test business logic without a DB</td>
+</tr>
+<tr>
+<td>Store JSON as TEXT</td>
+<td>SQLite is not a document DB; parse in Python</td>
+</tr>
+<tr>
+<td><code>logging</code> con <code>%s</code>/<code>%d</code> (no f-strings)</td>
+<td>Formateo lazy, cero costo si el nivel está desactivado</td>
+</tr>
+<tr>
+<td><code>setup_logging()</code> al inicio + logger por módulo</td>
+<td>Configurar una vez, saber de dónde viene cada mensaje</td>
+</tr>
+</tbody>
+</table>
+{% endraw %}

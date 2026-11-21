@@ -1,0 +1,361 @@
+{% raw %}
+<h1 id="python-markdown-rendering-markdown-as-html-with-syntax-highlighting">Python Markdown: Rendering Markdown as HTML with Syntax Highlighting</h1>
+<h2 id="1-the-problem">1. The problem</h2>
+<p>Markdown (<code>.md</code>) is a plain-text format used for writing documentation, blog posts, articles, and technical content.</p>
+<p>Browsers cannot render Markdown directly. They understand HTML.</p>
+<p>If we want to build a blog, CMS, or documentation website using Python, we need to:</p>
+<ol>
+<li>Read a Markdown file.</li>
+<li>Convert Markdown into HTML.</li>
+<li>Support tables, code blocks, headings, lists, etc.</li>
+<li>Highlight programming-language syntax.</li>
+<li>Sanitize the resulting HTML to protect against XSS attacks.</li>
+<li>Display the resulting HTML in the browser.</li>
+</ol>
+<p>We can accomplish this using three Python libraries:</p>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>markdown</code></td>
+<td>Convert Markdown into HTML</td>
+</tr>
+<tr>
+<td><code>Pygments</code></td>
+<td>Syntax highlighting</td>
+</tr>
+<tr>
+<td><code>nh3</code></td>
+<td>HTML sanitization</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-install-the-dependencies">2. Install the dependencies</h2>
+<div class="codehilite"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>markdown<span class="w"> </span>pygments<span class="w"> </span>nh3
+</code></pre></div>
+
+<h2 id="3-convert-markdown-into-html">3. Convert Markdown into HTML</h2>
+<p>Python-Markdown is a mature Markdown parser.</p>
+<p>Basic example:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">markdown</span>
+
+<span class="n">source</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2"># My article</span>
+
+<span class="s2">Hello **world**!</span>
+
+<span class="s2">- Python</span>
+<span class="s2">- JavaScript</span>
+<span class="s2">- Odin</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">html</span> <span class="o">=</span> <span class="n">markdown</span><span class="o">.</span><span class="n">markdown</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Output:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>My article<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Hello <span class="p">&lt;</span><span class="nt">strong</span><span class="p">&gt;</span>world<span class="p">&lt;/</span><span class="nt">strong</span><span class="p">&gt;</span>!<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>Python<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>JavaScript<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">li</span><span class="p">&gt;</span>Odin<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+</code></pre></div>
+
+<p>Notice that Python-Markdown produces an HTML fragment, not a complete HTML document.</p>
+<p>You can place this fragment inside a Jinja template.</p>
+<hr />
+<h2 id="4-enable-markdown-extensions">4. Enable Markdown extensions</h2>
+<p>Markdown has additional features that can be enabled through extensions.</p>
+<p>For example:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">markdown</span>
+
+<span class="n">md</span> <span class="o">=</span> <span class="n">markdown</span><span class="o">.</span><span class="n">Markdown</span><span class="p">(</span>
+    <span class="n">extensions</span><span class="o">=</span><span class="p">[</span>
+        <span class="s2">&quot;extra&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;toc&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;codehilite&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+
+<span class="n">source</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2"># Python example</span>
+
+<span class="s2">## Tables</span>
+
+<span class="s2">| Language | Type |</span>
+<span class="s2">|---|---|</span>
+<span class="s2">| Python | Dynamic |</span>
+<span class="s2">| C | Static |</span>
+
+<span class="s2">## Code</span>
+
+<span class="s2">\```python</span>
+<span class="s2">def hello():</span>
+<span class="s2">    print(&quot;Hello world!&quot;)</span>
+<span class="s2">\```</span>
+
+<span class="s2">&quot;&quot;&quot;</span>
+
+<span class="n">html</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+</code></pre></div>
+
+<p>What do these extensions do?</p>
+<table>
+<thead>
+<tr>
+<th>Extension</th>
+<th>Responsibility</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>extra</code></td>
+<td>Enables tables, footnotes, fenced code blocks, definition lists, and other features</td>
+</tr>
+<tr>
+<td><code>toc</code></td>
+<td>Generates heading IDs and a table of contents</td>
+</tr>
+<tr>
+<td><code>codehilite</code></td>
+<td>Integrates Pygments for syntax highlighting</td>
+</tr>
+</tbody>
+</table>
+<p>Important: <code>codehilite</code> uses Pygments to generate syntax-highlighted HTML.</p>
+<hr />
+<h2 id="5-understand-syntax-highlighting">5. Understand syntax highlighting</h2>
+<p>A code block normally looks like this:</p>
+<div class="codehilite"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">hello</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Hello&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>Without syntax highlighting, the browser displays it as ordinary text.</p>
+<p>Pygments analyzes the source code and identifies different tokens:</p>
+<ul>
+<li>Keywords: <code>def</code>, <code>return</code>, <code>if</code></li>
+<li>Functions: <code>print</code></li>
+<li>Strings: <code>"Hello"</code></li>
+<li>Comments</li>
+<li>Numbers</li>
+<li>Operators</li>
+</ul>
+<p>It generates HTML containing CSS classes.</p>
+<p>Simplified example:</p>
+<div class="codehilite"><pre><span></span><code><span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;codehilite&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">pre</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;k&quot;</span><span class="p">&gt;</span>def<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;nf&quot;</span><span class="p">&gt;</span>hello<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>():
+            <span class="p">&lt;</span><span class="nt">span</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;nb&quot;</span><span class="p">&gt;</span>print<span class="p">&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>(&quot;Hello&quot;)
+    <span class="p">&lt;/</span><span class="nt">pre</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</code></pre></div>
+
+<p>The classes identify the different token types.</p>
+<p>However, HTML classes alone do not provide colors.</p>
+<p>We need CSS.</p>
+<hr />
+<h2 id="6-generate-the-pygments-css-stylesheet">6. Generate the Pygments CSS stylesheet</h2>
+<p>Pygments includes predefined visual themes.</p>
+<p>It provides a command-line utility called <code>pygmentize</code>.</p>
+<p>Example:</p>
+<div class="codehilite"><pre><span></span><code>pygmentize<span class="w"> </span>-S<span class="w"> </span>default<span class="w"> </span>-f<span class="w"> </span>html<span class="w"> </span>&gt;<span class="w"> </span>pygments.css
+</code></pre></div>
+
+<p>Understanding the command:</p>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pygmentize</code></td>
+<td>Pygments CLI utility</td>
+</tr>
+<tr>
+<td><code>-S default</code></td>
+<td>Select the <code>default</code> theme</td>
+</tr>
+<tr>
+<td><code>-f html</code></td>
+<td>Generate CSS for HTML output</td>
+</tr>
+<tr>
+<td><code>&gt;</code></td>
+<td>Redirect standard output into a file</td>
+</tr>
+<tr>
+<td><code>pygments.css</code></td>
+<td>Destination stylesheet</td>
+</tr>
+</tbody>
+</table>
+<p>You can choose other themes:</p>
+<div class="codehilite"><pre><span></span><code>pygmentize<span class="w"> </span>-S<span class="w"> </span>monokai<span class="w"> </span>-f<span class="w"> </span>html<span class="w"> </span>&gt;<span class="w"> </span>pygments.css
+
+pygmentize<span class="w"> </span>-S<span class="w"> </span>dracula<span class="w"> </span>-f<span class="w"> </span>html<span class="w"> </span>&gt;<span class="w"> </span>pygments.css
+
+pygmentize<span class="w"> </span>-S<span class="w"> </span>nord<span class="w"> </span>-f<span class="w"> </span>html<span class="w"> </span>&gt;<span class="w"> </span>pygments.css
+</code></pre></div>
+
+<p>To discover available themes:</p>
+<div class="codehilite"><pre><span></span><code>pygmentize<span class="w"> </span>-L<span class="w"> </span>styles
+</code></pre></div>
+
+<p>Or programmatically:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pygments.styles</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_all_styles</span>
+
+<span class="k">for</span> <span class="n">style</span> <span class="ow">in</span> <span class="n">get_all_styles</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">style</span><span class="p">)</span>
+</code></pre></div>
+
+<p>You can also preview themes:</p>
+<p>https://pygments.org/demo/</p>
+<h3 id="include-the-stylesheet-in-your-html">Include the stylesheet in your HTML</h3>
+<div class="codehilite"><pre><span></span><code><span class="p">&lt;</span><span class="nt">link</span> <span class="na">rel</span><span class="o">=</span><span class="s">&quot;stylesheet&quot;</span> <span class="na">href</span><span class="o">=</span><span class="s">&quot;/static/pygments.css&quot;</span><span class="p">&gt;</span>
+</code></pre></div>
+
+<p>Now the browser knows how to color the syntax-highlighted HTML.</p>
+<p>The stylesheet is independent of your main CSS framework. It can coexist with Tailwind CSS.</p>
+<hr />
+<h2 id="7-understand-html-sanitization-and-xss">7. Understand HTML sanitization and XSS</h2>
+<p>There is an important security consideration.</p>
+<p>Python-Markdown allows raw HTML inside Markdown.</p>
+<p>For example, someone could submit:</p>
+<div class="codehilite"><pre><span></span><code><span class="gh"># Hello</span>
+
+&lt;script&gt;alert(&quot;XSS&quot;)&lt;/script&gt;
+</code></pre></div>
+
+<p>If you render that Markdown and insert the resulting HTML into a browser, malicious scripts could execute.</p>
+<p>This is called Cross-Site Scripting (XSS).</p>
+<p>The solution is HTML sanitization.</p>
+<p>We can use <code>nh3</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">nh3</span>
+
+<span class="n">safe_html</span> <span class="o">=</span> <span class="n">nh3</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+</code></pre></div>
+
+<p><code>nh3</code> removes or filters HTML elements and attributes that are not allowed by its sanitization policy.</p>
+<p>Important: sanitization should happen after Markdown rendering, not before.</p>
+<p>Also, sanitization is not a replacement for proper application security. Configure allowed tags and attributes according to your needs.</p>
+<hr />
+<h2 id="8-complete-example">8. Complete example</h2>
+<p>This combines everything:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">markdown</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">nh3</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">render_markdown</span><span class="p">(</span><span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">md</span> <span class="o">=</span> <span class="n">markdown</span><span class="o">.</span><span class="n">Markdown</span><span class="p">(</span>
+        <span class="n">extensions</span><span class="o">=</span><span class="p">[</span>
+            <span class="s2">&quot;extra&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;toc&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;codehilite&quot;</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="n">extension_configs</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;codehilite&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;guess_lang&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s2">&quot;use_pygments&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+
+    <span class="n">html</span> <span class="o">=</span> <span class="n">md</span><span class="o">.</span><span class="n">convert</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">nh3</span><span class="o">.</span><span class="n">clean</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+
+
+<span class="n">source</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;article.md&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+<span class="n">html</span> <span class="o">=</span> <span class="n">render_markdown</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+
+<span class="n">Path</span><span class="p">(</span><span class="s2">&quot;output.html&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">html</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<p>This example:</p>
+<ol>
+<li>Reads a Markdown file.</li>
+<li>Converts Markdown to HTML.</li>
+<li>Supports tables and fenced code blocks.</li>
+<li>Generates syntax-highlighted code using Pygments.</li>
+<li>Sanitizes the generated HTML.</li>
+<li>Saves the resulting HTML fragment.</li>
+</ol>
+<p>The Pygments CSS must also be included in the HTML page displaying the fragment.</p>
+<hr />
+<h2 id="9-important-architectural-distinction">9. Important architectural distinction</h2>
+<p>Markdown is plain text.</p>
+<p>You do not need a Markdown library to read or write <code>.md</code> files.</p>
+<p>Python's standard library is sufficient:</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># Read Markdown</span>
+<span class="n">source</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="s2">&quot;article.md&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+<span class="c1"># Write Markdown</span>
+<span class="n">Path</span><span class="p">(</span><span class="s2">&quot;article.md&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span>
+    <span class="s2">&quot;# My article</span><span class="se">\n\n</span><span class="s2">Hello world!&quot;</span><span class="p">,</span>
+    <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</code></pre></div>
+
+<p>The Markdown library is needed when you want to <strong>parse Markdown and transform it into another representation</strong>, such as HTML.</p>
+<p>Python-Markdown is not a full Markdown editor or a guaranteed lossless Markdown round-trip serializer.</p>
+<hr />
+<h2 id="10-mental-model-how-everything-connects">10. Mental model: how everything connects</h2>
+<div class="codehilite"><pre><span></span><code>article.md
+    |
+    v
+Python reads the file
+    |
+    v
+Python-Markdown
+    |
+    +--&gt; Extra extensions (tables, fenced code, etc.)
+    |
+    +--&gt; Pygments (syntax highlighting)
+    |
+    v
+HTML fragment
+    |
+    v
+nh3 (HTML sanitization)
+    |
+    v
+Safe HTML fragment
+    |
+    v
+Jinja template / HTML page
+    |
+    +--&gt; pygments.css (syntax colors)
+    |
+    v
+Browser
+</code></pre></div>
+
+<h2 id="references">References</h2>
+<ul>
+<li>Python-Markdown: https://python-markdown.github.io/</li>
+<li>Python-Markdown extensions: https://python-markdown.github.io/extensions/</li>
+<li>Pygments: https://pygments.org/</li>
+<li>Pygments command-line usage: https://pygments.org/docs/cmdline/</li>
+<li>nh3: https://github.com/messense/nh3</li>
+<li>CommonMark specification: https://spec.commonmark.org/</li>
+</ul>
+<p><strong>Key takeaway:</strong> Python-Markdown converts content, Pygments highlights code, nh3 sanitizes HTML, and CSS controls presentation. Each component has a separate responsibility.</p>
+{% endraw %}

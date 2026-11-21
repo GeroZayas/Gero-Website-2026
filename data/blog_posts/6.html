@@ -1,0 +1,50 @@
+{% raw %}
+<h1 id="til-git-word-diff">TIL <code>git --word-diff</code></h1>
+<p><code>git diff --word-diff</code> shows <strong>inline, word-level changes</strong> instead of line-level diffs.</p>
+<p>Think of it as “diff, but with a scalpel instead of a chainsaw.”</p>
+<h3 id="what-it-does">What it does</h3>
+<ul>
+<li>Compares files <strong>word by word</strong></li>
+<li>Highlights <strong>added</strong> and <strong>removed</strong> words inline</li>
+<li>Ideal for prose, docs, comments, or small code edits</li>
+</ul>
+<h3 id="example">Example</h3>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>diff<span class="w"> </span>--word-diff
+</code></pre></div>
+
+<p>Output style (simplified):</p>
+<div class="codehilite"><pre><span></span><code>This is [-old-]{+new+} text.
+</code></pre></div>
+
+<ul>
+<li><code>[-old-]</code> → removed</li>
+<li><code>{+new+}</code> → added</li>
+</ul>
+<h3 id="common-variants">Common variants</h3>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>diff<span class="w"> </span>--word-diff<span class="o">=</span>color
+</code></pre></div>
+
+<p>Same thing, but colorized (much nicer).</p>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>diff<span class="w"> </span>--word-diff-regex<span class="o">=</span><span class="s1">&#39;[^[:space:]]+&#39;</span>
+</code></pre></div>
+
+<p>Defines what a “word” is (useful for code tokens).</p>
+<div class="codehilite"><pre><span></span><code>git<span class="w"> </span>diff<span class="w"> </span>--word-diff<span class="o">=</span>plain
+</code></pre></div>
+
+<p>Explicit plain-text markers (default behavior).</p>
+<h3 id="when-to-use-it">When to use it</h3>
+<ul>
+<li>Reviewing <strong>documentation</strong></li>
+<li>Reviewing <strong>comments</strong></li>
+<li>Catching <strong>tiny semantic changes</strong> hidden in big lines</li>
+<li>Code reviews where whitespace noise is killing your soul</li>
+</ul>
+<h3 id="when-not-to-use-it">When <em>not</em> to use it</h3>
+<ul>
+<li>Large refactors</li>
+<li>Reformatting changes</li>
+<li>Anything where line structure matters more than tokens</li>
+</ul>
+<p><strong>TL;DR</strong>: <code>git diff --word-diff</code> is precision diffing. Use it when lines are too coarse and you care about <em>what</em> changed, not just <em>where</em>.</p>
+{% endraw %}

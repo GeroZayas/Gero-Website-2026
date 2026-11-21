@@ -1,0 +1,322 @@
+{% raw %}
+<h1 id="working-with-files-fopen-fclose-and-more">Working with files fopen() fclose() and more</h1>
+<p>In C (ANSI C / C99), <strong>file I/O</strong> is performed through the <strong><code>stdio</code> library</strong>, which uses an abstraction called a <strong>stream</strong> represented by the <code>FILE</code> type. The central function is <strong><code>fopen()</code></strong>, which opens a file and returns a pointer to a <code>FILE</code> object used by other functions.</p>
+<p>All these functions operate on a <code>FILE *</code> handle.</p>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+</code></pre></div>
+
+<hr />
+<h1 id="1-fopen-opening-a-file">1. <code>fopen()</code> — Opening a File</h1>
+<h3 id="prototype">Prototype</h3>
+<div class="codehilite"><pre><span></span><code><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="nf">fopen</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">filename</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">mode</span><span class="p">);</span>
+</code></pre></div>
+
+<h3 id="parameters">Parameters</h3>
+<ul>
+<li><strong>filename</strong> → path to the file</li>
+<li><strong>mode</strong> → how the file will be accessed</li>
+</ul>
+<h3 id="return-value">Return value</h3>
+<ul>
+<li>Returns a <strong><code>FILE *</code> pointer</strong> if successful</li>
+<li>Returns <strong><code>NULL</code></strong> if the file cannot be opened </li>
+</ul>
+<hr />
+<h2 id="file-modes">File Modes</h2>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>"r"</code></td>
+<td>Read only</td>
+</tr>
+<tr>
+<td><code>"w"</code></td>
+<td>Write only (creates or truncates file)</td>
+</tr>
+<tr>
+<td><code>"a"</code></td>
+<td>Append</td>
+</tr>
+<tr>
+<td><code>"r+"</code></td>
+<td>Read and write</td>
+</tr>
+<tr>
+<td><code>"w+"</code></td>
+<td>Read/write (overwrite file)</td>
+</tr>
+<tr>
+<td><code>"a+"</code></td>
+<td>Read/append</td>
+</tr>
+</tbody>
+</table>
+<p>Binary modes (important on Windows):</p>
+<div class="codehilite"><pre><span></span><code>&quot;rb&quot;
+&quot;wb&quot;
+&quot;ab&quot;
+</code></pre></div>
+
+<hr />
+<h2 id="example">Example</h2>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fopen</span><span class="p">(</span><span class="s">&quot;data.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;r&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">file</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;Failed to open file</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;File opened successfully</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">fclose</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h1 id="2-fclose-closing-a-file">2. <code>fclose()</code> — Closing a File</h1>
+<h3 id="prototype_1">Prototype</h3>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">fclose</span><span class="p">(</span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">stream</span><span class="p">);</span>
+</code></pre></div>
+
+<h3 id="purpose">Purpose</h3>
+<p>Closes a file and <strong>flushes buffered data to disk</strong>.</p>
+<h3 id="return">Return</h3>
+<ul>
+<li><code>0</code> → success</li>
+<li><code>EOF</code> → error</li>
+</ul>
+<h3 id="example_1">Example</h3>
+<div class="codehilite"><pre><span></span><code><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fopen</span><span class="p">(</span><span class="s">&quot;test.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;w&quot;</span><span class="p">);</span>
+
+<span class="n">fprintf</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;hello</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+
+<span class="n">fclose</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+</code></pre></div>
+
+<hr />
+<h1 id="3-writing-to-files">3. Writing to Files</h1>
+<h2 id="fprintf"><code>fprintf()</code></h2>
+<p>Formatted output to a file.</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">fprintf</span><span class="p">(</span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">stream</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">format</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
+</code></pre></div>
+
+<p>Example:</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fopen</span><span class="p">(</span><span class="s">&quot;numbers.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;w&quot;</span><span class="p">);</span>
+
+<span class="n">fprintf</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;Value = %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="mi">10</span><span class="p">);</span>
+
+<span class="n">fclose</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+</code></pre></div>
+
+<p>This works the same way as <code>printf()</code> but writes to a file instead of stdout. </p>
+<hr />
+<h2 id="fputc"><code>fputc()</code></h2>
+<p>Write <strong>one character</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">fputc</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">stream</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Example:</p>
+<div class="codehilite"><pre><span></span><code><span class="n">fputc</span><span class="p">(</span><span class="sc">&#39;A&#39;</span><span class="p">,</span><span class="w"> </span><span class="n">file</span><span class="p">);</span>
+</code></pre></div>
+
+<hr />
+<h2 id="fputs"><code>fputs()</code></h2>
+<p>Write a <strong>string</strong></p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">fputs</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">str</span><span class="p">,</span><span class="w"> </span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">stream</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Example</p>
+<div class="codehilite"><pre><span></span><code><span class="n">fputs</span><span class="p">(</span><span class="s">&quot;hello world</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">file</span><span class="p">);</span>
+</code></pre></div>
+
+<hr />
+<h1 id="4-reading-from-files">4. Reading from Files</h1>
+<h2 id="fscanf"><code>fscanf()</code></h2>
+<p>Formatted input from a file.</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">fscanf</span><span class="p">(</span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">stream</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">format</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
+</code></pre></div>
+
+<p>Example</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="p">;</span>
+
+<span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fopen</span><span class="p">(</span><span class="s">&quot;numbers.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;r&quot;</span><span class="p">);</span>
+
+<span class="n">fscanf</span><span class="p">(</span><span class="n">f</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;%d&quot;</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">x</span><span class="p">);</span>
+
+<span class="n">fclose</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+</code></pre></div>
+
+<hr />
+<h2 id="fgetc"><code>fgetc()</code></h2>
+<p>Read one character.</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">fgetc</span><span class="p">(</span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">stream</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Example</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="n">c</span><span class="p">;</span>
+
+<span class="k">while</span><span class="p">((</span><span class="n">c</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fgetc</span><span class="p">(</span><span class="n">file</span><span class="p">))</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">EOF</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">putchar</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h2 id="fgets"><code>fgets()</code></h2>
+<p>Read a string (safe line reading).</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="nf">fgets</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">str</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="w"> </span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">stream</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Example</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="mi">128</span><span class="p">];</span>
+
+<span class="n">fgets</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">),</span><span class="w"> </span><span class="n">file</span><span class="p">);</span>
+</code></pre></div>
+
+<hr />
+<h1 id="5-binary-io-block-io">5. Binary I/O (Block I/O)</h1>
+<p>For performance and raw data.</p>
+<h2 id="fread"><code>fread()</code></h2>
+<div class="codehilite"><pre><span></span><code><span class="kt">size_t</span><span class="w"> </span><span class="nf">fread</span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">ptr</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">stream</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Example</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
+
+<span class="n">fread</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="n">file</span><span class="p">);</span>
+</code></pre></div>
+
+<hr />
+<h2 id="fwrite"><code>fwrite()</code></h2>
+<div class="codehilite"><pre><span></span><code><span class="kt">size_t</span><span class="w"> </span><span class="nf">fwrite</span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">ptr</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">size</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">stream</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Example</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="n">data</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
+
+<span class="n">fwrite</span><span class="p">(</span><span class="n">data</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">int</span><span class="p">),</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="n">file</span><span class="p">);</span>
+</code></pre></div>
+
+<p>These operate on <strong>blocks of memory</strong>, which is far more cache-friendly and faster than character I/O for large data.</p>
+<hr />
+<h1 id="6-file-position-functions">6. File Position Functions</h1>
+<h2 id="fseek"><code>fseek()</code></h2>
+<p>Move file cursor.</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">fseek</span><span class="p">(</span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">stream</span><span class="p">,</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">offset</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">origin</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Origin options:</p>
+<div class="codehilite"><pre><span></span><code>SEEK_SET
+SEEK_CUR
+SEEK_END
+</code></pre></div>
+
+<p>Example</p>
+<div class="codehilite"><pre><span></span><code><span class="n">fseek</span><span class="p">(</span><span class="n">file</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">SEEK_END</span><span class="p">);</span>
+</code></pre></div>
+
+<hr />
+<h2 id="ftell"><code>ftell()</code></h2>
+<p>Get current position.</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">long</span><span class="w"> </span><span class="nf">ftell</span><span class="p">(</span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">stream</span><span class="p">);</span>
+</code></pre></div>
+
+<hr />
+<h2 id="rewind"><code>rewind()</code></h2>
+<p>Reset to beginning.</p>
+<div class="codehilite"><pre><span></span><code><span class="n">rewind</span><span class="p">(</span><span class="n">file</span><span class="p">);</span>
+</code></pre></div>
+
+<hr />
+<h1 id="7-example-full-file-read">7. Example: Full File Read</h1>
+<div class="codehilite"><pre><span></span><code><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fopen</span><span class="p">(</span><span class="s">&quot;test.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;r&quot;</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">f</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buffer</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
+
+<span class="w">    </span><span class="k">while</span><span class="p">(</span><span class="n">fgets</span><span class="p">(</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">buffer</span><span class="p">),</span><span class="w"> </span><span class="n">f</span><span class="p">))</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">printf</span><span class="p">(</span><span class="s">&quot;%s&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">buffer</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">fclose</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<hr />
+<h1 id="8-how-it-works-internally-performance-view">8. How It Works Internally (Performance View)</h1>
+<p><code>FILE</code> streams are <strong>buffered</strong>.</p>
+<p>Meaning:</p>
+<div class="codehilite"><pre><span></span><code>Disk  -&gt;  stdio buffer  -&gt;  your program
+</code></pre></div>
+
+<p>Advantages:</p>
+<ul>
+<li>Fewer system calls</li>
+<li>Higher throughput</li>
+<li>Sequential access is very fast</li>
+</ul>
+<p>But it also means:</p>
+<ul>
+<li>data may stay in memory until <code>fflush()</code> or <code>fclose()</code>.</li>
+</ul>
+<hr />
+<h1 id="9-important-errors-to-handle">9. Important Errors to Handle</h1>
+<p>Always check:</p>
+<div class="codehilite"><pre><span></span><code><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">f</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fopen</span><span class="p">(</span><span class="s">&quot;file.txt&quot;</span><span class="p">,</span><span class="w"> </span><span class="s">&quot;r&quot;</span><span class="p">);</span>
+
+<span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="n">f</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">perror</span><span class="p">(</span><span class="s">&quot;fopen&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p>Ignoring this is one of the most common C bugs.</p>
+<hr />
+<h1 id="10-typical-file-io-workflow">10. Typical File I/O Workflow</h1>
+<div class="codehilite"><pre><span></span><code>fopen()
+   ↓
+read/write (fgetc, fscanf, fread, fprintf...)
+   ↓
+fclose()
+</code></pre></div>
+
+<hr />
+<p>✅ <strong>Core functions you must know</strong></p>
+<div class="codehilite"><pre><span></span><code>fopen
+fclose
+fprintf / fscanf
+fgetc / fputc
+fgets / fputs
+fread / fwrite
+fseek / ftell
+</code></pre></div>
+
+<hr />
+<p>If you'd like, I can also show:</p>
+<ul>
+<li><strong>How <code>FILE</code> buffering actually works internally</strong></li>
+<li><strong>When to use <code>fread</code> instead of <code>fscanf</code> (huge performance difference)</strong></li>
+<li><strong>How game engines or databases avoid stdio and implement faster file I/O</strong> (very relevant for high-performance C).</li>
+</ul>
+{% endraw %}

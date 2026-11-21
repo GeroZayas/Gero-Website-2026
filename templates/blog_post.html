@@ -100,7 +100,8 @@
     [&_ol_li::marker]:font-semibold
     [&_ol_li::marker]:text-blue-800
   ">
-        {{blog_post.content}}
+        <!-- {{blog_post.content}} -->
+        {% include blog_post.id ~ ".html"%}
     </div>
 </div>
 

@@ -1,0 +1,71 @@
+{% raw %}
+<h1 id="sqlite-python-safe-ways-to-pass-variables-security">SQLite Python - safe ways to pass variables (Security)</h1>
+<p>For <strong>SQLite</strong> in Python, you have two main ways to pass variables safely. Both methods prevent SQL injection by treating your data as "values" rather than executable code.</p>
+<hr />
+<h3 id="1-the-positional-way">1. The Positional Way (<code>?</code>)</h3>
+<p>This is the most common method. You use a question mark as a placeholder and pass a <strong>tuple</strong> of values as the second argument.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+
+<span class="n">db</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">)</span> <span class="c1"># Using an in-memory DB for this example</span>
+<span class="n">user_id</span> <span class="o">=</span> <span class="mi">101</span>
+
+<span class="c1"># Note: The second argument MUST be a tuple. </span>
+<span class="c1"># (user_id,) with a comma is how Python defines a single-item tuple.</span>
+<span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users WHERE id = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">user_id</span><span class="p">,))</span>
+</code></pre></div>
+
+<h3 id="2-the-named-way-name">2. The Named Way (<code>:name</code>)</h3>
+<p>As you mentioned, this uses a <strong>dictionary</strong>. It is much cleaner for queries with multiple variables.</p>
+<div class="codehilite"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">sqlite3</span>
+
+<span class="n">db</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;:memory:&quot;</span><span class="p">)</span>
+<span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;id&quot;</span><span class="p">:</span> <span class="mi">101</span><span class="p">,</span> <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;active&quot;</span><span class="p">}</span>
+
+<span class="c1"># The keys in the dict must match the names after the colons</span>
+<span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;SELECT * FROM users WHERE id = :id AND status = :status&quot;</span>
+<span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+</code></pre></div>
+
+<hr />
+<h3 id="comparison-summary">Comparison Summary</h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Positional (<code>?</code>)</th>
+<th>Named (<code>:label</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Data Container</strong></td>
+<td>Tuple <code>(val1, val2)</code></td>
+<td>Dictionary <code>{"key": val}</code></td>
+</tr>
+<tr>
+<td><strong>Best For</strong></td>
+<td>Simple queries with 1-2 variables</td>
+<td>Complex queries or many variables</td>
+</tr>
+<tr>
+<td><strong>Ordering</strong></td>
+<td>Must match the order in the SQL</td>
+<td>Order doesn't matter</td>
+</tr>
+<tr>
+<td><strong>Readability</strong></td>
+<td>Low (lots of <code>?</code>)</td>
+<td>High (descriptive names)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="common-mistake-to-avoid">⚠️ Common Mistake to Avoid</h3>
+<p>Never use Python's f-strings or <code>%</code> operator inside the string:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1"># ❌ DANGEROUS - Vulnerable to SQL Injection</span>
+<span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;SELECT * FROM users WHERE name = &#39;</span><span class="si">{</span><span class="n">user_name</span><span class="si">}</span><span class="s2">&#39;&quot;</span><span class="p">)</span> 
+
+<span class="c1"># ✅ SAFE - The database driver handles the data</span>
+<span class="n">db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM users WHERE name = ?&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">user_name</span><span class="p">,))</span>
+</code></pre></div>
+{% endraw %}
