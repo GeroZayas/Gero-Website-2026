@@ -74,6 +74,23 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
+    response.headers["X-Content-Type-Options"] = "nosnif"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe eval' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "img-src 'self' data:; "
+        "connect-src 'self'; "
+        "frame-ancestors 'none'; "
+    )
+    return response
+    
+
 # --- ROUTES ---
 @app.get("/")
 @app.get("/home")
@@ -210,7 +227,7 @@ def list_db_blog_entries(request: Request):
 # --- EXECUTING  ---
 
 if __name__ == "__main__":
-    PORT = "8000"
+    PORT = "8080"
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
