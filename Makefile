@@ -4,6 +4,9 @@ run:
 generate-blog-posts-files:
 	python3 -m services.markdown_html_factory.generate_html_blog_posts
 
+db:
+	python3 -m services.db.db
+
 git:
 	git add -A && \
 	printf "message: "; \

@@ -6,6 +6,8 @@ from pathlib import Path
 from types import MappingProxyType
 
 from rich import print
+from rich.console import Console
+from rich.panel import Panel
 
 fmt = "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s"
 logging.basicConfig(level=logging.DEBUG, format=fmt)
@@ -42,6 +44,21 @@ WHERE id = ?
 DELETE_ROW_QUERY = """
 DELETE FROM {table_name}
 WHERE id = ?
+"""
+
+CREATE_TABLE_PROJECTS_QUERY = """
+CREATE TABLE projects (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    tags TEXT,
+    link TEXT,
+    description TEXT,
+);
+"""
+
+INSERT_NEW_PROJECT_TABLE_PROJECTS_QUERY = """
+INSERT INTO projects (name, tags, link, description)
+VALUES (:name, :tags, :link, :description);
 """
 
 
@@ -130,13 +147,11 @@ def delete_row_in_db(row_id: int):
     return {"return delete": res}
 
 
-# =======================================================================================
-# MAIN entry point
-# =======================================================================================
-def main():
+def table_blog():
     execute_query(SELECT_QUERY, ())
     print("=" * 80)
-    user_choice = input("i - insert, u - update, d - delete, q - exit: ")
+    print(Panel("Choose action: i - insert, u - update, d - delete, q - exit: ", title="Choose action", border_style="yellow"))
+    user_choice = input(">>> ")
     print("=" * 80)
 
     if user_choice == "i":
@@ -177,6 +192,25 @@ def main():
 
     print("=" * 80)
     return 0
+
+
+def table_project():
+    return
+
+
+# =======================================================================================
+# MAIN entry point
+# =======================================================================================
+def main():
+    console = Console()
+    
+    console.print("[bold green]Welcome, Gero, to the DB Utility![/bold green]")
+    print(Panel("Choose table: 'b' -> blog , 'p' -> projects:", title="Choose table", border_style="green"))
+    table_choice = input(">>> ").lower()
+    if table_choice == "p":
+        table_project()
+    elif table_choice == "b":
+        table_blog()
 
 
 if __name__ == "__main__":
