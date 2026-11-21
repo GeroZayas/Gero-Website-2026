@@ -1,6 +1,7 @@
 import logging
 import sqlite3
 from contextlib import closing
+from functools import lru_cache
 from pathlib import Path
 from types import MappingProxyType
 
@@ -47,6 +48,7 @@ WHERE id = ?
 # =======================================================================================
 # UTILS procs
 # =======================================================================================
+@lru_cache(maxsize=128)
 def print_rows_from_db_result(rows_list: list[sqlite3.Row]):
     for i, row in enumerate(rows_list, 1):
         print(f" ROW {i} ".center(40, "="))
@@ -62,6 +64,7 @@ def print_rows_from_db_result(rows_list: list[sqlite3.Row]):
 # =======================================================================================
 # Main PROCs
 # =======================================================================================
+@lru_cache(maxsize=128)
 def execute_query(query: str, values: tuple, read_one=False):
     """Returns ROWS of executed query if any"""
     with closing(sqlite3.connect(db_settings["path"])) as conn:
@@ -108,6 +111,7 @@ def insert_row_to_db(data: dict):
         INSERT_ROW_QUERY.format(table_name=db_settings["table_name"]),
         (title, content, tags, lang),
     )
+    execute_query.cache_clear()
     return {"return insert": res}
 
 
@@ -117,11 +121,13 @@ def update_row_in_db(row_id: int, data: dict):
         query=UPDATE_ROW_QUERY.format(table_name=db_settings["table_name"]),
         values=(title, content, row_id),
     )
+    execute_query.cache_clear()
     return {"return update": res}
 
 
 def delete_row_in_db(row_id: int):
     res = execute_query(query=DELETE_ROW_QUERY, values=(row_id,))
+    execute_query.cache_clear()
     return {"return delete": res}
 
 
