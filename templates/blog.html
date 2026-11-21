@@ -9,11 +9,11 @@ blog_post_card %}
 
 {% include "create_delete_post.html" %}
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+<div class="grid grid-cols-1 gap-3">
     {% for post in blog_posts %}
 
     {{blog_post_card(post["id"], post["title"], post["tags"],
-    "static/images/heather-kShjMv-1tD8-unsplash.webp", post["created_at"])}}
+    "static/images/heather-kShjMv-1tD8-unsplash.webp", post["created_at"][:10])}}
 
     {% endfor %}
 </div>
