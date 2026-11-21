@@ -7,6 +7,7 @@ from datastar_py import ServerSentEventGenerator as SSE
 from datastar_py.fastapi import ReadSignals, datastar_response, read_signals
 from fastapi import Body, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
@@ -71,6 +72,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+app.add_middleware(
+    GZipMiddleware, minimum_size=500
 )
 
 
