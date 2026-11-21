@@ -191,7 +191,7 @@ async def blog_post_creator_insert_new_post(signals: ReadSignals):
 
     print_sep(tags)
 
-    res_insert = db.insert_row_to_db(data=new_blog_post_data)
+    res_insert = db.insert_row_to_blog_db(data=new_blog_post_data)
 
     log_message = """
     CALLING:
@@ -217,7 +217,7 @@ async def blog_post_creator_insert_new_post(signals: ReadSignals):
 
 @app.post("/blog-post-creator-delete-post/{blog_id}")
 async def blog_post_creator_delete(blog_id: int, request: Request):
-    res_delete = db.delete_row_in_db(row_id=blog_id)
+    res_delete = db.delete_row_in_blog_db(row_id=blog_id)
     print(res_delete)
     # TODO: add a patch signals piece of logic to see confirmation in the frontend
     return {"status": "OK", "action_completed": f"deleted blog id: {blog_id}"}

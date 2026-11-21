@@ -29,15 +29,17 @@ log.info("scratch buffer iniciado")
 # =======================================================================================
 SELECT_QUERY = "SELECT * FROM {table_name}"
 
-READ_ROW = "SELECT * FROM {table_name} WHERE id = ?"
+READ_ROW = "SELECT * FROM {table_name} WHERE id = ?"  # ***
 
+# BLOG QUERRIES /////////////////////////////////////////////////////////////////////////
 INSERT_ROW_QUERY = """
 INSERT INTO {table_name} (title, content, tags, lang) VALUES (?, ?, ?, ?)
 """
 
+# ***A
 UPDATE_ROW_QUERY = """
 UPDATE {table_name}
-SET title = ?, content = ?, tags = ?, lang = ?, 
+SET title = ?, content = ?, tags = ?, lang = ? 
 WHERE id = ?
 """
 
@@ -46,6 +48,7 @@ DELETE FROM {table_name}
 WHERE id = ?
 """
 
+# PROJECT QUERRIES //////////////////////////////////////////////////////////////////////
 CREATE_TABLE_PROJECTS_QUERY = """
 CREATE TABLE projects (
     id INTEGER PRIMARY KEY,
@@ -81,7 +84,7 @@ def print_rows_from_db_result(rows_list: list[sqlite3.Row]):
 # Main PROCs
 # =======================================================================================
 @lru_cache(maxsize=128)
-def execute_query(query: str, values: tuple, read_one=False):
+def execute_query(query: str, values: tuple, table: str, read_one=False):
     """Returns ROWS of executed query if any"""
     with closing(sqlite3.connect(db_settings["path"])) as conn:
         conn.row_factory = sqlite3.Row
@@ -90,33 +93,29 @@ def execute_query(query: str, values: tuple, read_one=False):
         if values and read_one == False:
             # with conn: -> makes it like conn.commit() if success or ROLLBACK if fail
             with conn:
-                cursor.execute(
-                    query.format(table_name=db_settings["table_name"]), values
-                )
+                cursor.execute(query.format(table_name=table), values)
                 log.debug("Cursor Ejecutado %s", cursor.rowcount)
                 return cursor.rowcount
-        elif read_one == True:
+        elif read_one == True:  # ***
             with conn:
-                cursor.execute(
-                    query.format(table_name=db_settings["table_name"]), values
-                )
+                cursor.execute(query.format(table_name=table), values)
                 rows_list = cursor.fetchall()
                 # print(rows_list)
-                # print_rows_from_db_result(rows_list)
+                print_rows_from_db_result(rows_list)
                 log.debug("Cursor Ejecutado %s", cursor.rowcount)
                 return rows_list
 
         else:
             # QUERY JUST FOR READING ALL DATA
             with conn:
-                cursor.execute(query.format(table_name=db_settings["table_name"]))
+                cursor.execute(query.format(table_name=table))
                 rows_list = cursor.fetchall()
                 log.debug("Cursor Ejecutado %s", cursor.rowcount)
-                # print_rows_from_db_result(rows_list)
+                print_rows_from_db_result(rows_list)
                 return rows_list
 
 
-def insert_row_to_db(data: dict):
+def insert_row_to_blog_db(data: dict):
     title, content, tags, lang = (
         data["title"],
         data["content"],
@@ -124,74 +123,99 @@ def insert_row_to_db(data: dict):
         data["lang"],
     )
     res = execute_query(
-        INSERT_ROW_QUERY.format(table_name=db_settings["table_name"]),
-        (title, content, tags, lang),
+        INSERT_ROW_QUERY,
+        table="gero_blog",
+        values=(title, content, tags, lang),
     )
     execute_query.cache_clear()
     return {"return insert": res}
 
 
-def update_row_in_db(row_id: int, data: dict):
-    title, content = data["title"], data["content"]
+def update_row_in_blog_db(row_id: int, data: dict):
+    title, content, tags, lang = (
+        data["title"],
+        data["content"],
+        data["tags"],
+        data["lang"],
+    )
     res = execute_query(
-        query=UPDATE_ROW_QUERY.format(table_name=db_settings["table_name"]),
-        values=(title, content, row_id),
+        query=UPDATE_ROW_QUERY,  # ***A
+        table="gero_blog",
+        values=(title, content, tags, lang, row_id),
     )
     execute_query.cache_clear()
     return {"return update": res}
 
 
-def delete_row_in_db(row_id: int):
-    res = execute_query(query=DELETE_ROW_QUERY, values=(row_id,))
+def delete_row_in_blog_db(row_id: int):
+    res = execute_query(query=DELETE_ROW_QUERY, table="gero_blog", values=(row_id,))
     execute_query.cache_clear()
     return {"return delete": res}
 
 
 def table_blog():
-    execute_query(SELECT_QUERY, ())
-    print("=" * 80)
-    print(Panel("Choose action: i - insert, u - update, d - delete, q - exit: ", title="Choose action", border_style="yellow"))
-    user_choice = input(">>> ")
-    print("=" * 80)
+    running = True
+    while running:
+        print(
+            Panel(
+                "Choose action: r - read all entries, r1 - read one, i - insert, u - update, d - delete, q - exit: ",
+                title="Choose action",
+                border_style="yellow",
+            )
+        )
+        user_choice = input(">>> ")
+        print("=" * 80)
 
-    if user_choice == "i":
-        new_title_input = input("INSERT TITLE: ")
-        new_content_input = input("INSERT CONTENT: ")
-        new_tags_input = input("INSERT TAGS (separated by commas): ")
-        new_lang_input = input("INSERT LANG: ")
-        data = {
-            "title": new_title_input,
-            "content": new_content_input,
-            "tags": new_tags_input,
-            "lang": new_lang_input,
-        }
-        res_insert = insert_row_to_db(data)
-        print(res_insert)
-    elif user_choice == "u":
-        row_id_input = int(input("INSERT ROW ID: "))
-        new_title_input = input("INSERT TITLE: ")
-        new_content_input = input("INSERT CONTENT: ")
-        data = {
-            "title": new_title_input,
-            "content": new_content_input,
-        }
-        res_update = update_row_in_db(row_id=row_id_input, data=data)
-        print(res_update)
+        if user_choice == "i":
+            new_title_input = input("INSERT TITLE: ")
+            new_content_input = input("INSERT CONTENT: ")
+            new_tags_input = input("INSERT TAGS (separated by commas): ")
+            new_lang_input = input("INSERT LANG: ")
+            data = {
+                "title": new_title_input,
+                "content": new_content_input,
+                "tags": new_tags_input,
+                "lang": new_lang_input,
+            }
+            res_insert = insert_row_to_blog_db(data)
+            print(res_insert)
+        elif user_choice == "r":
+            execute_query(SELECT_QUERY, table="gero_blog", values=())
+            print("=" * 80)
+        elif user_choice == "r1":
+            row_id_input = input("INSERT ROW ID: ")
+            execute_query(
+                READ_ROW, table="gero_blog", values=(row_id_input,), read_one=True
+            )  # ***
+            print("=" * 80)
+        elif user_choice == "u":
+            row_id_input = int(input("INSERT ROW ID: "))
+            new_title_input = input("INSERT TITLE: ")
+            new_content_input = input("INSERT CONTENT: ")
+            new_tags_input = input("INSERT TAGS: ")
+            new_lang_input = input("INSERT LANG: ")
+            data = {
+                "title": new_title_input,
+                "content": new_content_input,
+                "tags": new_tags_input,
+                "lang": new_lang_input,
+            }
+            res_update = update_row_in_blog_db(row_id=row_id_input, data=data)
+            print(res_update)
 
-    elif user_choice == "d":
-        row_id_input = int(input("INSERT ROW ID: "))
-        res_delete = delete_row_in_db(row_id=row_id_input)
-        print(res_delete)
+        elif user_choice == "d":
+            row_id_input = int(input("INSERT ROW ID: "))
+            res_delete = delete_row_in_blog_db(row_id=row_id_input)
+            print(res_delete)
 
-    elif user_choice == "q":
-        print("BYE BYE")
-        exit()
+        elif user_choice == "q":
+            print("BYE BYE")
+            running = False
 
-    else:
-        print("COMMAND NOT AVAILABLE")
+        else:
+            print("COMMAND NOT AVAILABLE")
 
-    print("=" * 80)
-    return 0
+        print("=" * 80)
 
 
 def table_project():
@@ -203,9 +227,15 @@ def table_project():
 # =======================================================================================
 def main():
     console = Console()
-    
+
     console.print("[bold green]Welcome, Gero, to the DB Utility![/bold green]")
-    print(Panel("Choose table: 'b' -> blog , 'p' -> projects:", title="Choose table", border_style="green"))
+    print(
+        Panel(
+            "Choose table: 'b' -> blog , 'p' -> projects:",
+            title="Choose table",
+            border_style="green",
+        )
+    )
     table_choice = input(">>> ").lower()
     if table_choice == "p":
         table_project()
