@@ -232,7 +232,7 @@ def list_db_blog_entries(request: Request):
 # --- EXECUTING  ---
 
 if __name__ == "__main__":
-    PORT = "8080"
+    PORT = "8000"
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
