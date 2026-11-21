@@ -16,7 +16,7 @@ tags = "tags"
 content = "content"
 lang = "lang"
 
-rows = db.execute_query(db.SELECT_QUERY, ())
+rows = db.execute_query(db.SELECT_QUERY, table="gero_blog", values=())
 
 
 def save_blog_post_to_html_file(id: str, data: str):
