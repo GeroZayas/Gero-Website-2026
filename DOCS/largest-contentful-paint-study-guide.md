@@ -10,7 +10,7 @@ Notes from this project: what LCP is, what was found on this site, and how to ex
 
 **LCP (Largest Contentful Paint)** is the time from when the page starts loading until the largest visible element (i◊mage or block of text) is painted on screen.
 
-- It measures *perceived load speed*: "when does the main content appear?"
+- It measures _perceived load speed_: "when does the main content appear?"
 - Google's targets (Core Web Vitals, measured at the 75th percentile of real users):
   - **Good:** 2.5 s or less
   - **Needs improvement:** 2.5 s to 4.0 s
@@ -19,6 +19,7 @@ Notes from this project: what LCP is, what was found on this site, and how to ex
 **Typical LCP elements:** hero/banner images, the profile picture at the top of a page, or a large heading.
 
 **What delays LCP:**
+
 1. Slow server response (TTFB)
 2. Render-blocking CSS or JS in `<head>`
 3. Slow resource loading (large images, large fonts)
@@ -26,6 +27,7 @@ Notes from this project: what LCP is, what was found on this site, and how to ex
 5. Client-side rendering delays
 
 **Tools to measure:**
+
 - Chrome DevTools > Lighthouse (run in incognito, mobile and desktop)
 - Chrome DevTools > Performance panel (look for the "LCP" marker)
 - PageSpeed Insights (https://pagespeed.web.dev)
@@ -34,34 +36,34 @@ Notes from this project: what LCP is, what was found on this site, and how to ex
 
 ## 2. Glossary
 
-| Term | Meaning |
-|---|---|
-| **TTFB** | Time To First Byte: how fast the server starts responding. |
-| **Render-blocking** | A resource the browser must finish before painting (e.g. a `<script>` in `<head>` without `defer`). |
-| **`defer` / `async`** | Script attributes that let the HTML keep parsing while the script downloads. |
-| **`preload`** | `<link rel="preload">` tells the browser to fetch a resource now, because it will be needed soon. |
-| **`fetchpriority="high"`** | Hint that an image is important and should download first. |
-| **`loading="lazy"`** | Delay downloading images that are off-screen. Don't use it on the LCP image. |
-| **`width` / `height`** | Reserve space for an image so the layout doesn't jump (CLS). |
-| **`font-display: swap`** | Show fallback text immediately, then swap in the web font when it loads. |
-| **WOFF2** | Compressed web font format. Smaller than TTF/OTF. |
-| **WebP / AVIF** | Modern image formats, much smaller than PNG/JPEG at similar quality. |
-| **Retina / 2x** | Screens with double pixel density. Serve images at 2x the displayed CSS size for sharpness. |
-| **Gzip / Brotli** | Compression for text responses (HTML, CSS, JS). |
-| **Cache-Control** | Response header telling browsers how long to keep a file. |
+| Term                       | Meaning                                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------------------------- |
+| **TTFB**                   | Time To First Byte: how fast the server starts responding.                                          |
+| **Render-blocking**        | A resource the browser must finish before painting (e.g. a `<script>` in `<head>` without `defer`). |
+| **`defer` / `async`**      | Script attributes that let the HTML keep parsing while the script downloads.                        |
+| **`preload`**              | `<link rel="preload">` tells the browser to fetch a resource now, because it will be needed soon.   |
+| **`fetchpriority="high"`** | Hint that an image is important and should download first.                                          |
+| **`loading="lazy"`**       | Delay downloading images that are off-screen. Don't use it on the LCP image.                        |
+| **`width` / `height`**     | Reserve space for an image so the layout doesn't jump (CLS).                                        |
+| **`font-display: swap`**   | Show fallback text immediately, then swap in the web font when it loads.                            |
+| **WOFF2**                  | Compressed web font format. Smaller than TTF/OTF.                                                   |
+| **WebP / AVIF**            | Modern image formats, much smaller than PNG/JPEG at similar quality.                                |
+| **Retina / 2x**            | Screens with double pixel density. Serve images at 2x the displayed CSS size for sharpness.         |
+| **Gzip / Brotli**          | Compression for text responses (HTML, CSS, JS).                                                     |
+| **Cache-Control**          | Response header telling browsers how long to keep a file.                                           |
 
 ---
 
 ## 3. Findings for this site
 
-| Area | What was found | Why it matters for LCP |
-|---|---|---|
-| Profile picture | `static/images/profile-1.png` is **512x512 PNG, about 292 KB**, displayed at **5rem (about 80px)** | Probably the LCP element on the home page. It's far larger than needed. |
-| Tailwind | `@tailwindcss/browser@4` loaded as a normal `<script>` in `<head>` | Render-blocking. Generates CSS at runtime, which delays the first paint. |
-| Fonts | Three Iosevka `.woff2` files, about **1.2 MB each** (about 3.7 MB total) | Large downloads. Text can be delayed while the font loads. No `font-display` or `preload` set. |
-| Card images | 640px JPEGs, up to about 89 KB, displayed at about 120px | Larger than needed. No `loading="lazy"` and no `width`/`height` set. |
-| Compression | No `GZipMiddleware` in `main.py` | HTML/CSS/JS sent uncompressed unless the host does it. |
-| Caching | `StaticFiles` sets no `Cache-Control` | Repeat visits re-download everything. |
+| Area            | What was found                                                                                     | Why it matters for LCP                                                                         |
+| --------------- | -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Profile picture | `static/images/profile-1.png` is **512x512 PNG, about 292 KB**, displayed at **5rem (about 80px)** | Probably the LCP element on the home page. It's far larger than needed.                        |
+| Tailwind        | `@tailwindcss/browser@4` loaded as a normal `<script>` in `<head>`                                 | Render-blocking. Generates CSS at runtime, which delays the first paint.                       |
+| Fonts           | Three Iosevka `.woff2` files, about **1.2 MB each** (about 3.7 MB total)                           | Large downloads. Text can be delayed while the font loads. No `font-display` or `preload` set. |
+| Card images     | 640px JPEGs, up to about 89 KB, displayed at about 120px                                           | Larger than needed. No `loading="lazy"` and no `width`/`height` set.                           |
+| Compression     | No `GZipMiddleware` in `main.py`                                                                   | HTML/CSS/JS sent uncompressed unless the host does it.                                         |
+| Caching         | `StaticFiles` sets no `Cache-Control`                                                              | Repeat visits re-download everything.                                                          |
 
 ### Priority order for fixes
 
@@ -157,12 +159,12 @@ The HTML would look roughly like this. Study it; the repo owner applies the chan
 />
 ```
 
-| Attribute | Why |
-|---|---|
-| `width` / `height` | Reserves space so the layout doesn't shift (CLS). |
-| `fetchpriority="high"` | Tells the browser to download this image first. |
-| No `loading="lazy"` | Lazy loading would delay the LCP image. Only use it below the fold. |
-| `alt` | Accessibility and SEO. Use a real description, not an empty string, for a meaningful image. |
+| Attribute              | Why                                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------------------- |
+| `width` / `height`     | Reserves space so the layout doesn't shift (CLS).                                           |
+| `fetchpriority="high"` | Tells the browser to download this image first.                                             |
+| No `loading="lazy"`    | Lazy loading would delay the LCP image. Only use it below the fold.                         |
+| `alt`                  | Accessibility and SEO. Use a real description, not an empty string, for a meaningful image. |
 
 For a fallback to PNG in older browsers, use `<picture>`:
 
@@ -170,7 +172,13 @@ For a fallback to PNG in older browsers, use `<picture>`:
 <picture>
   <source srcset="static/images/profile-1.avif" type="image/avif" />
   <source srcset="static/images/profile-1.webp" type="image/webp" />
-  <img src="static/images/profile-1.png" width="80" height="80" fetchpriority="high" alt="Gero Zayas profile picture" />
+  <img
+    src="static/images/profile-1.png"
+    width="80"
+    height="80"
+    fetchpriority="high"
+    alt="Gero Zayas profile picture"
+  />
 </picture>
 ```
 
@@ -227,4 +235,4 @@ A: The browser picks the best format it supports and falls back to PNG if none m
 - **LCP = "when does the biggest thing show up?"**
 - **Three fixes for the biggest image:** make it **small**, make it **early** (`fetchpriority`, `preload`), and give it **room** (`width`/`height`).
 - **Don't block the page:** if it's in `<head>` and it's not needed to paint, use `defer` or move it out.
-- **Lazy = later.** Only use `loading="lazy"` for things *below* the fold.
+- **Lazy = later.** Only use `loading="lazy"` for things _below_ the fold.
