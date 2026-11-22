@@ -141,7 +141,7 @@ def projects(request: Request):
 @app.get("/blog")
 def blog(request: Request):
     dict_db_blog_entries = db.execute_query(
-        db.SELECT_QUERY, table="gero_blog", values=()
+        db.SELECT_QUERY, table="gero_blog", values={}
     )
     print("*" * 100)
     print(dict_db_blog_entries)
@@ -228,6 +228,46 @@ async def blog_post_creator_delete(blog_id: int, request: Request):
 
 
 # end of BLOG ROUTES ------------------------------------------------------------------------------
+
+
+@app.get("/project-creator")
+async def project_creator(request: Request):
+    context = {"message": "hello world, this is the project page", "project": ""}
+    return templates.TemplateResponse(
+        request=request, name="project_creator.html", context=context
+    )
+
+
+@datastar_response
+@app.post("/project-creator-submit-content")
+async def project_creator_insert_new_project(signals: ReadSignals):
+    print("*" * 100)
+    name = (signals.get("projectCreatorName")).strip()  # type: ignore
+    description = (signals.get("projectCreatorDescription")).strip()  # type: ignore
+    tags = [e.strip() for e in (signals.get("projectCreatorTags")).split(",")]  # type: ignore
+    link = signals.get("projectCreatorLink").strip()  # type: ignore
+
+    new_project_data = {
+        "name": name,
+        "description": description,
+        "tags": ",".join(tags),
+        "link": link,
+    }
+
+    print_sep(tags)
+
+    res_insert = db.insert_row_to_projects_table_db(data=new_project_data)
+
+    log_message = """
+    CALLING:
+    `db.insert_row_to_db(data=new_project_data)`
+    Opening DB and WRITING to it.
+    """
+    write_to_log_file(log_message)
+
+    print(res_insert)
+    # TODO: add a patch signals piece of logic to see confirmation in the frontend
+    print("*" * 100)
 
 
 @app.get("/resources")
