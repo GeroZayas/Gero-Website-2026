@@ -15,11 +15,11 @@ project_card %}
 <!-- link, title, tags, picture, description -->
 
 <div class="">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {% for project in projects %}
 
         {{project_card(project["link"], project["name"], project["tags"],
-        project["picture"], project["description"])}}
+        "static/images/bruno-martins-ElUbmfsgvV0-unsplash.webp", project["description"])}}
 
         {% endfor %}
     </div>
