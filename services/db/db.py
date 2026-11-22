@@ -29,27 +29,25 @@ log.info("scratch buffer iniciado")
 # =======================================================================================
 SELECT_QUERY = "SELECT * FROM {table_name}"
 
-READ_ROW = "SELECT * FROM {table_name} WHERE id = ?"
+READ_ROW = "SELECT * FROM {table_name} WHERE id = :id"
 
 # BLOG QUERRIES /////////////////////////////////////////////////////////////////////////
 INSERT_ROW_BLOG_TABLE_QUERY = """
-INSERT INTO gero_blog (title, content, tags, lang) VALUES (?, ?, ?, ?)
+INSERT INTO gero_blog (title, content, tags, lang) VALUES (:title, :content, :tags, :lang)
 """
-
 
 UPDATE_ROW_BLOG_TABLE_QUERY = """
 UPDATE gero_blog
-SET title = ?, content = ?, tags = ?, lang = ? 
-WHERE id = ?
+SET title = :title, content = :content, tags = :tags, lang = :lang 
+WHERE id = :id
 """
 
 DELETE_ROW_BLOG_TABLE_QUERY = """
 DELETE FROM gero_blog
-WHERE id = ?
+WHERE id = :id
 """
 
 # PROJECT QUERRIES //////////////////////////////////////////////////////////////////////
-# ***
 CREATE_TABLE_PROJECTS_QUERY = """
 CREATE TABLE projects (
     id INTEGER PRIMARY KEY,
@@ -66,8 +64,13 @@ VALUES (:name, :tags, :link, :description);
 """
 
 UPDATE_ROW_TABLE_PROJECTS_QUERY = """
-UPDATE {table_name}
-SET title = ?, content = ?, tags = ?, lang = ? 
+UPDATE projects
+SET name= :name, tags = :tags, link = :link, description = :description
+WHERE id = :row_id
+"""
+
+DELETE_ROW_TABLE_PROJECTS_QUERY = """
+DELETE FROM projects
 WHERE id = ?
 """
 
@@ -98,8 +101,8 @@ def handle_db_operational_errors():
 # =======================================================================================
 # Main PROCs
 # =======================================================================================
-@lru_cache(maxsize=128)
-def execute_query(query: str, values: tuple, table: str, read_one=False):
+# @lru_cache(maxsize=128)
+def execute_query(query: str, values: dict, table: str, read_one=False):
     """Returns ROWS of executed query if any"""
     with closing(sqlite3.connect(db_settings["path"])) as conn:
         conn.row_factory = sqlite3.Row
@@ -141,44 +144,69 @@ def insert_row_to_blog_db(data: dict):
     res = execute_query(
         INSERT_ROW_BLOG_TABLE_QUERY,
         table="gero_blog",
-        values=(title, content, tags, lang),
+        values=data,
     )
-    execute_query.cache_clear()
+
     return {"return insert": res}
 
 
-def update_row_in_blog_db(row_id: int, data: dict):
-    title, content, tags, lang = (
-        data["title"],
-        data["content"],
-        data["tags"],
-        data["lang"],
-    )
+def update_row_in_blog_db(data: dict):
     res = execute_query(
         query=UPDATE_ROW_BLOG_TABLE_QUERY,
         table="gero_blog",
-        values=(title, content, tags, lang, row_id),
+        values=data,
     )
-    execute_query.cache_clear()
+
     return {"return update": res}
 
 
 def delete_row_in_blog_db(row_id: int):
     res = execute_query(
-        query=DELETE_ROW_BLOG_TABLE_QUERY, table="gero_blog", values=(row_id,)
+        query=DELETE_ROW_BLOG_TABLE_QUERY, table="gero_blog", values={"id": row_id}
     )
-    execute_query.cache_clear()
+
     return {"return delete": res}
 
 
 # PROJECTS TABLES
-# ***
 def create_projects_table():
     res = execute_query(CREATE_TABLE_PROJECTS_QUERY, values=(), table="projects")
     print(
         "EXECUTING -> execute_query(CREATE_TABLE_PROJECTS_QUERY, values=(), table='projects')"
     )
     return {"res": res}
+
+
+def insert_row_to_projects_table_db(data: dict):
+    name, tags, link, description = (
+        data["name"],
+        data["tags"],
+        data["link"],
+        data["description"],
+    )
+    #  (name, tags, link, description)
+    res = execute_query(
+        INSERT_NEW_PROJECT_TABLE_PROJECTS_QUERY,
+        table="projects",
+        values=data,
+    )
+    # execute_query.cache_clear()
+    return {"return insert": res}
+
+
+def update_row_in_projects_table_db(row_id: int, data: dict):
+    title, tags, link, description = (
+        data["name"],
+        data["tags"],
+        data["link"],
+        data["description"],
+    )
+    res = execute_query(
+        query=UPDATE_ROW_TABLE_PROJECTS_QUERY,
+        table="projects",
+        values=data,
+    )
+    return {"return update": res}
 
 
 def show_user_options():
@@ -233,8 +261,9 @@ def table_blog():
                 "content": new_content_input,
                 "tags": new_tags_input,
                 "lang": new_lang_input,
+                "id": row_id_input,
             }
-            res_update = update_row_in_blog_db(row_id=row_id_input, data=data)
+            res_update = update_row_in_blog_db(data=data)
             print(res_update)
 
         elif user_choice == "d":
@@ -262,6 +291,23 @@ def table_project():
         elif user_choice == "q":
             print("BYE BYE")
             running = False
+
+        if user_choice == "i":
+            new_name_input = input("INSERT NAME: ")
+            new_tags_input = input("INSERT TAGS (separated by commas): ")
+            new_link_input = input("INSERT LINK: ")
+            new_description_input = input("INSERT DESCRIPTION: ")
+            data = {
+                "name": new_name_input,
+                "tags": new_link_input,
+                "link": new_tags_input,
+                "description": new_description_input,
+            }
+            res_insert = insert_row_to_projects_table_db(data)
+            print(res_insert)
+        elif user_choice == "r":
+            execute_query(SELECT_QUERY, table="gero_blog", values=())
+            print("=" * 80)
 
     print("=" * 80)
     return
