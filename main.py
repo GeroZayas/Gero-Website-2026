@@ -122,12 +122,14 @@ def about(request: Request):
 
 @app.get("/projects")
 def projects(request: Request):
-    projects = [
-        "project 1",
-        "project 2",
-        "project 3",
-    ]
-    context = {"message": "hello world, this is about page", "projects": projects}
+    dict_db_projects_entries = db.execute_query(
+        db.SELECT_QUERY, table="projects", values={}
+    )
+
+    context = {
+        "message": "hello world, this is about page",
+        "projects": dict_db_projects_entries,
+    }
     return templates.TemplateResponse(
         request=request, name="projects.html", context=context
     )
