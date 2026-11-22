@@ -32,19 +32,19 @@ SELECT_QUERY = "SELECT * FROM {table_name}"
 READ_ROW = "SELECT * FROM {table_name} WHERE id = ?"
 
 # BLOG QUERRIES /////////////////////////////////////////////////////////////////////////
-INSERT_ROW_QUERY = """
-INSERT INTO {table_name} (title, content, tags, lang) VALUES (?, ?, ?, ?)
+INSERT_ROW_BLOG_TABLE_QUERY = """
+INSERT INTO gero_blog (title, content, tags, lang) VALUES (?, ?, ?, ?)
 """
 
 
-UPDATE_ROW_QUERY = """
-UPDATE {table_name}
+UPDATE_ROW_BLOG_TABLE_QUERY = """
+UPDATE gero_blog
 SET title = ?, content = ?, tags = ?, lang = ? 
 WHERE id = ?
 """
 
-DELETE_ROW_QUERY = """
-DELETE FROM {table_name}
+DELETE_ROW_BLOG_TABLE_QUERY = """
+DELETE FROM gero_blog
 WHERE id = ?
 """
 
@@ -63,6 +63,12 @@ CREATE TABLE projects (
 INSERT_NEW_PROJECT_TABLE_PROJECTS_QUERY = """
 INSERT INTO projects (name, tags, link, description)
 VALUES (:name, :tags, :link, :description);
+"""
+
+UPDATE_ROW_TABLE_PROJECTS_QUERY = """
+UPDATE {table_name}
+SET title = ?, content = ?, tags = ?, lang = ? 
+WHERE id = ?
 """
 
 
@@ -133,7 +139,7 @@ def insert_row_to_blog_db(data: dict):
         data["lang"],
     )
     res = execute_query(
-        INSERT_ROW_QUERY,
+        INSERT_ROW_BLOG_TABLE_QUERY,
         table="gero_blog",
         values=(title, content, tags, lang),
     )
@@ -149,7 +155,7 @@ def update_row_in_blog_db(row_id: int, data: dict):
         data["lang"],
     )
     res = execute_query(
-        query=UPDATE_ROW_QUERY,
+        query=UPDATE_ROW_BLOG_TABLE_QUERY,
         table="gero_blog",
         values=(title, content, tags, lang, row_id),
     )
@@ -158,7 +164,9 @@ def update_row_in_blog_db(row_id: int, data: dict):
 
 
 def delete_row_in_blog_db(row_id: int):
-    res = execute_query(query=DELETE_ROW_QUERY, table="gero_blog", values=(row_id,))
+    res = execute_query(
+        query=DELETE_ROW_BLOG_TABLE_QUERY, table="gero_blog", values=(row_id,)
+    )
     execute_query.cache_clear()
     return {"return delete": res}
 
