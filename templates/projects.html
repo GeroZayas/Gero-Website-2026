@@ -1,13 +1,27 @@
 {% extends "base.html" %} {% block title %} Projects {% endblock %} {% block
 content %}
+{% from "./jinja_components/project_card.html" import
+project_card %}
 
 <!-- <section class="mt-1 mb-1">{% include "header_home_small.html"%}</section> -->
 
 <div class="mt-2 mb-2">
-  <h1 class="text-3xl">Projects</h1>
+    <h1 class="text-3xl">Projects</h1>
 </div>
 
+{% include "create_delete_project.html" %}
+
+
+<!-- link, title, tags, picture, description -->
+
 <div class="">
-  <p>Some projects of mine...</p>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        {% for project in projects %}
+
+        {{project_card(project["link"], project["name"], project["tags"],
+        project["picture"], project["description"])}}
+
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}

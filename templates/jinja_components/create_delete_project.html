@@ -1,0 +1,21 @@
+<div data-signals="{isLocal: window.location.host === '0.0.0.0:8000'}">
+    <p data-show="$isLocal" class="bg-gray-100 text-slate-600">⚠️ This is only shown when
+    <pre data-show="$isLocal"
+        class="text-xs bg-gray-700 text-yellow-300"><code>window.location.host === '0.0.0.0:8000'</code></pre>
+    </p>
+    <div data-show="$isLocal" class="w-auto mt-4 mb-4 items-center flex gap-4 p-2 border-2 border-gray-200">
+        <div>
+            <a class="bg-blue-500 hover:bg-blue-700 text-white font-bold lg:py-2 lg:px-4 rounded"
+                href="/project-creator">Create
+                new
+                project</a>
+            </a>
+        </div>
+        <div>
+            <button
+                data-on:click="@post('/project-creator-delete-project/' + $projecttIdDelete); window.location.reload();"
+                class="bg-red-500 hover:bg-red-700 text-white font-bold lg:py-2 lg:px-4 rounded">Delete project</button>
+            <input class="bg-white border w-20 border-gray-200 rounded " data-bind:project-id-delete type="number">
+        </div>
+    </div>
+</div>

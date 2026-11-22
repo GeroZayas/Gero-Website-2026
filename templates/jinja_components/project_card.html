@@ -1,0 +1,28 @@
+{% macro project_card(link, title, tags, picture, description,
+    classes="items-center flex max-w-l overflow-hidden rounded bg-slate-50"
+    )%}
+
+<div class="{{classes}}">
+  <div class="w-20 shrink-0">
+    <a href="blog/{{link}}">
+      <img
+        src="{{picture}}"
+        alt="Card image"
+        class="object-cover object-center transition-transform duration-300 hover:scale-105"
+      />
+    </a>
+  </div>
+
+  <div class="md:p-2 p-2">
+    <a
+      href="blog/{{link}}"
+      class="lg:text-1xl font-bold text-md text-red-700 hover:text-red-900 hover:underline"
+    >
+      {{title}}
+    </a>
+    <p class="mt-2 lg:text-sm text-xs text-gray-600">{{description}}</p>
+    <br>
+    <p class="mt-2 lg:text-sm text-xs text-gray-600">{{tags}}</p>
+  </div>
+</div>
+{% endmacro %}
