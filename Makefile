@@ -13,3 +13,7 @@ git:
 	read MESSAGE; \
 	git commit -m "$$MESSAGE" && \
 	git push
+
+
+help:
+	@cat Makefile
