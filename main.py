@@ -1,13 +1,20 @@
 import json
 import os
+from time import sleep
 from typing import Literal
 
 import uvicorn
-from datastar_py import ServerSentEventGenerator as SSE
-from datastar_py.fastapi import ReadSignals, datastar_response, read_signals
-from fastapi import Body, FastAPI, Request
+from datastar_py.fastapi import (
+    DatastarResponse,
+    ReadSignals,
+    datastar_response,
+    read_signals,
+)
+from datastar_py.fastapi import ServerSentEventGenerator as SSE
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader
@@ -136,22 +143,57 @@ def projects(request: Request):
 
 
 # BLOG ROUTES ------------------------------------------------------------------------------
+dict_db_blog_entries = db.execute_query(db.SELECT_QUERY, table="gero_blog", values={})
+# print([e["title"] for e in dict_db_blsog_entries])
 
 
+# ***A
 @app.get("/blog")
-def blog(request: Request):
-    dict_db_blog_entries = db.execute_query(
-        db.SELECT_QUERY, table="gero_blog", values={}
-    )
-    print("*" * 100)
-    print(dict_db_blog_entries)
-    print("*" * 100)
-
+async def blog(request: Request, signals: ReadSignals):
     context = {"message": "This is blog page", "blog_posts": dict_db_blog_entries}
-
     return templates.TemplateResponse(
         request=request, name="blog.html", context=context
     )
+
+
+def blog_post_stream(search_term: str):
+    blog_post_card_classes = (
+        "items-center flex max-w-l overflow-hidden rounded-lg bg-linear-to-r from-white to-slate-50 transition-all ",
+        "duration-300 ease-in-out border border-gray-100 ",
+    )
+    html = """<div id="blog-posts-cards-area" 
+        class="grid grid-cols-1 gap-3">"""
+
+    selected_titles = [
+        post
+        for post in dict_db_blog_entries
+        if search_term.lower() in post["title"].lower()
+        or search_term.lower() in post["tags"].lower()
+    ]
+    if not selected_titles:
+        selected_titles = [post for post in dict_db_blog_entries]
+    for post in selected_titles:
+        html += f"""
+            <div class="{blog_post_card_classes}">
+                <div class="p-2 pl-5">
+                    <a href="blog/{post["id"]}"
+                        class="font-bold text-lg text-red-700 transition-all duration-300 ease-in-out hover:underline hover:text-red-900">
+                        {post["title"]}
+                    </a>
+                    <p class="mt-2 text-xs text-gray-600">{post["tags"]}</p>
+                    <p class="text-xs text-yellow-600">{post["created_at"]}</p>
+                </div>
+            </div>
+            """
+        # html += "<br>"
+
+    html += """</div>"""
+    yield SSE.patch_elements(html)
+
+
+@app.get("/blog-post-card-render", response_class=StreamingResponse)
+async def blog_post_card_render(request: Request, signals: ReadSignals):
+    return DatastarResponse(blog_post_stream(signals["searchTerm"]))
 
 
 @app.get("/blog/{blog_id}")
