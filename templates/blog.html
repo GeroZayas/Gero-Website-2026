@@ -12,7 +12,7 @@ blog_post_card %}
 
 <div class="mb-2" id="search">
     FILTER:
-    <input data-on:keydown="evt.key === 'Enter' && @get('/blog-post-card-render')" class="border border-gray-200 rounded bg-white"
+    <input data-on:input__debounce.300ms="@get('/blog-post-card-render')" class="border border-gray-200 rounded bg-white"
         data-bind:search-term="" type="text">
     <!-- <button class="bg-white border border-gray-200" data-on:click="@get('/blog-post-card-render')">GO</button> -->
 </div>

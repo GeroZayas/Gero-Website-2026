@@ -170,8 +170,8 @@ def blog_post_stream(search_term: str):
         if search_term.lower() in post["title"].lower()
         or search_term.lower() in post["tags"].lower()
     ]
-    if not selected_titles:
-        selected_titles = [post for post in dict_db_blog_entries]
+    # if not selected_titles:
+    #     selected_titles = [post for post in dict_db_blog_entries]
     for post in selected_titles:
         html += f"""
             <div class="{blog_post_card_classes}">
