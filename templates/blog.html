@@ -20,6 +20,13 @@ blog_post_card %}
         class="border border-gray-200 rounded bg-white" data-bind:search-term="" type="text">
     <!-- <button class="bg-white border border-gray-200" data-on:click="@get('/blog-post-card-render')">GO</button> -->
 </div>
+<div id="tags-area">
+    {% for tag in tags %}
+    <button class="text-xs bg-yellow-600 hover:bg-yellow-500 text-white px-1 border-b-1 border-yellow-800 hover:border-yellow-700 rounded">{{tag}}</button>
+    {% endfor %}
+
+</div>
+<br>
 <div data-init="@get('/blog-post-card-render')" id="blog-posts-cards-area" class="grid grid-cols-1 gap-3 bg-red-200">
 </div>
 <br>

@@ -157,6 +157,7 @@ def return_blog_entries_tags_set():
         for d in return_dict_db_blog_entries()
     ]
     print("dict_db_blog_entries_tags", dict_db_blog_entries_tags_set)
+    return dict_db_blog_entries_tags_set
 
 
 # ***A
