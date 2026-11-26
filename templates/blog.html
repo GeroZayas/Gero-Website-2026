@@ -8,36 +8,41 @@ blog_post_card %}
         'isLocal': window.location.host === '0.0.0.0:8000' || window.location.host === 'localhost:8000',
         'current-page': 1,
         'remaining':0,
+        'selected-tag':'all',
     }" class="mt-2 mb-2">
     <h1 class="text-3xl">Blog</h1>
 </div>
 
 {% include "create_delete_post.html" %}
 
+
+<!-- ================= SEARCH / FILTER ============================ -->
 <div class="mb-2" id="search">
     Search:
     <input data-on:input__debounce.100ms="@get('/blog-post-card-render')"
         class="border border-gray-200 rounded bg-white" data-bind:search-term="" type="text">
     <!-- <button class="bg-white border border-gray-200" data-on:click="@get('/blog-post-card-render')">GO</button> -->
 </div>
+<!-- ================= TAGS ============================ -->
 <div id="tags-area">
+     <button data-on:click="$selected-tag='{{tag}}'; @get('/blog-post-card-render')"
+        class="text-xs bg-teal-600 hover:bg-teal-500 text-white px-1 border-b-1 border-teal-800 hover:border-teal-700 rounded">All Tags
+    </button>
     {% for tag in tags %}
-    <button class="text-xs bg-yellow-600 hover:bg-yellow-500 text-white px-1 border-b-1 border-yellow-800 hover:border-yellow-700 rounded">{{tag}}</button>
+    <button data-on:click="$selected-tag='{{tag}}'; @get('/blog-post-card-render')"
+        class="text-xs bg-yellow-600 hover:bg-yellow-500 text-white px-1 border-b-1 border-yellow-800 hover:border-yellow-700 rounded">{{tag}}
+    </button>
     {% endfor %}
 
 </div>
 <br>
+<!-- ================= BLOG POSTS AREA ============================ -->
 <div data-init="@get('/blog-post-card-render')" id="blog-posts-cards-area" class="grid grid-cols-1 gap-3 bg-red-200">
 </div>
 <br>
+
+<!-- ================= NAVIGATION BUTTONS ============================ -->
 <div class="flex justify-between">
-    <!-- DEBUG -->
-
-    <!-- <pre class="bg-slate-100" data-json-signals></pre>
-    <br> -->
-
-    <!-- end of DEBUG -->
-
     <button data-show="$current-page > 1" data-on:click="$current-page -= 1; @get('/blog-post-card-render')"
         id="btn-previous-page"
         class="text-sm bg-red-700 hover:bg-red-600 text-white py-1 px-2 border-b-4 border-red-900 hover:border-red-700 rounded">Previous
@@ -47,6 +52,13 @@ blog_post_card %}
         class="ml-auto text-sm bg-cyan-700 hover:bg-cyan-600 text-white py-1 px-2 border-b-4 border-cyan-900 hover:border-cyan-800 rounded">Next
         Page</button>
 </div>
+<br>
+
+<!-- DEBUG -->
+
+<pre class="bg-slate-100" data-json-signals></pre>
+
+<!-- end of DEBUG -->
 
 <!-- <div class="grid grid-cols-1 gap-3">
     {% for post in blog_posts %}
