@@ -1,5 +1,5 @@
 run:
-	python3 main.py
+	clear && python3 main.py
 
 generate-blog-posts-files:
 	python3 -m services.markdown_html_factory.generate_html_blog_posts
@@ -17,3 +17,6 @@ git:
 
 help:
 	@cat Makefile
+
+scratch:
+	python3 scratch_buffer.py

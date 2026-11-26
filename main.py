@@ -143,14 +143,32 @@ def projects(request: Request):
 
 
 # BLOG ROUTES ------------------------------------------------------------------------------
-dict_db_blog_entries = db.execute_query(db.SELECT_QUERY, table="gero_blog", values={})
-# print([e["title"] for e in dict_db_blsog_entries])
+def return_dict_db_blog_entries():
+    dict_db_blog_entries = db.execute_query(
+        db.SELECT_QUERY, table="gero_blog", values={}
+    )
+    return dict_db_blog_entries
+
+
+def return_blog_entries_tags_set():
+    dict_db_blog_entries_tags_set = set()
+    # dict_db_blog_entries_tags_set.add("all")
+    dict_db_blog_entries_tags = [
+        [dict_db_blog_entries_tags_set.add(t) for t in d["tags"].split(",")]
+        for d in return_dict_db_blog_entries()
+    ]
+    print("dict_db_blog_entries_tags", dict_db_blog_entries_tags_set)
+    return dict_db_blog_entries_tags_set
 
 
 # ***A
 @app.get("/blog")
 async def blog(request: Request, signals: ReadSignals):
-    context = {"message": "This is blog page", "blog_posts": dict_db_blog_entries}
+    context = {
+        "message": "This is blog page",
+        "blog_posts": return_dict_db_blog_entries(),
+        "tags": return_blog_entries_tags_set(),
+    }
     return templates.TemplateResponse(
         request=request, name="blog.html", context=context
     )
@@ -160,7 +178,9 @@ async def blog(request: Request, signals: ReadSignals):
 # TODO: cuando se click en un tag, que el search_term adopte ese valor
 
 
-def blog_post_stream(search_term: str, current_page: int = 1):
+def blog_post_stream(
+    search_term: str, selected_tag: str = "all", current_page: int = 1
+):
     blog_post_card_classes = (
         "items-center flex max-w-l overflow-hidden rounded-lg bg-linear-to-r from-white to-slate-50 transition-all ",
         "duration-300 ease-in-out border border-gray-100 ",
@@ -172,17 +192,28 @@ def blog_post_stream(search_term: str, current_page: int = 1):
     PAGE_START = current_page * PAGE_SIZE - PAGE_SIZE
     PAGE_END = PAGE_START + PAGE_SIZE
 
-    selected_titles = [
-        post
-        for post in dict_db_blog_entries
-        if search_term.lower() in post["title"].lower()
-        or search_term.lower() in post["tags"].lower()
-    ]
-    # if not selected_titles:
-    #     selected_titles = [post for post in dict_db_blog_entries]
-    # for i, post in enumerate(selected_titles):
+    print("TYPE OF SELECTED TAG", type(selected_tag))
+
+    if selected_tag != "all":
+        selected_titles = [
+            post
+            for post in return_dict_db_blog_entries()
+            if selected_tag.lower() in post["tags"].lower()
+        ]
+    else:
+        selected_titles = [
+            post
+            for post in return_dict_db_blog_entries()
+            if search_term.lower() in post["title"].lower()
+            or search_term.lower() in post["tags"].lower()
+        ]
+
+    print("=================")
+    print("selected_titles")
+    print(selected_titles)
+    print("=================")
+
     for post in selected_titles[PAGE_START:PAGE_END]:
-        # if PAGE_START <= i < PAGE_END:
         html += f"""
                 <div class="{blog_post_card_classes}">
                     <div class="p-2 pl-5">
@@ -199,13 +230,17 @@ def blog_post_stream(search_term: str, current_page: int = 1):
 
     html += """</div>"""
     yield SSE.patch_elements(html)
-    yield SSE.patch_signals({"remaining":len(selected_titles) - PAGE_END})
+    yield SSE.patch_signals({"remaining": len(selected_titles) - PAGE_END})
 
 
 @app.get("/blog-post-card-render", response_class=StreamingResponse)
 async def blog_post_card_render(request: Request, signals: ReadSignals):
     print("==== SIGNALS ====", signals)
-    return DatastarResponse(blog_post_stream(signals["searchTerm"], signals["current-page"]))
+    return DatastarResponse(
+        blog_post_stream(
+            signals["searchTerm"], signals["selected-tag"], signals["current-page"]
+        )
+    )
 
 
 @app.get("/blog/{blog_id}")
@@ -213,7 +248,10 @@ def blog_post(blog_id: str, request: Request):
     blog_post = {
         "id": blog_id,
     }
-    context = {"message": "hello world, this is blog page", "blog_post": blog_post}
+    context = {
+        "message": "hello world, this is blog page",
+        "blog_post": blog_post,
+    }
     return templates.TemplateResponse(
         request=request, name="blog_post.html", context=context
     )
