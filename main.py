@@ -17,11 +17,14 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from icecream import ic
 from jinja2 import Environment, FileSystemLoader
 from rich import print
 
 from services.db import db
 from services.markdown_html_factory import md_html_factory as md_html
+
+ic.configureOutput(includeContext=True, contextAbsPath=False)
 
 # ================= NOTES GERO TO DO, FIX ME and ELSE ===============================================
 
@@ -157,7 +160,7 @@ def return_blog_entries_tags_set():
         [dict_db_blog_entries_tags_set.add(t) for t in d["tags"].split(",")]
         for d in return_dict_db_blog_entries()
     ]
-    print("dict_db_blog_entries_tags", dict_db_blog_entries_tags_set)
+    ic(dict_db_blog_entries_tags_set)
     return dict_db_blog_entries_tags_set
 
 
@@ -192,7 +195,7 @@ def blog_post_stream(
     PAGE_START = current_page * PAGE_SIZE - PAGE_SIZE
     PAGE_END = PAGE_START + PAGE_SIZE
 
-    print("TYPE OF SELECTED TAG", type(selected_tag))
+    ic(type(selected_tag))
 
     if selected_tag != "all":
         selected_titles = [
@@ -209,8 +212,7 @@ def blog_post_stream(
         ]
 
     print("=================")
-    print("selected_titles")
-    print(selected_titles)
+    # ic(selected_titles)
     print("=================")
 
     for post in selected_titles[PAGE_START:PAGE_END]:
@@ -235,7 +237,7 @@ def blog_post_stream(
 
 @app.get("/blog-post-card-render", response_class=StreamingResponse)
 async def blog_post_card_render(request: Request, signals: ReadSignals):
-    print("==== SIGNALS ====", signals)
+    ic(signals)
     return DatastarResponse(
         blog_post_stream(
             signals["searchTerm"], signals["selected-tag"], signals["current-page"]
@@ -274,18 +276,16 @@ async def blog_post_creator_insert_new_post(signals: ReadSignals):
     tags = [e.strip() for e in (signals.get("blogPostCreatorTags")).split(",")]  # type: ignore
     lang = signals.get("blogPostCreatorLang").strip()  # type: ignore
 
-    print(title)
-    print(content)
-    print(tags)
-    print(lang)
+    ic(title)
+    ic(content)
+    ic(tags)
+    ic(lang)
     new_blog_post_data = {
         "title": title,
         "content": content,
         "tags": ",".join(tags),
         "lang": lang.upper(),
     }
-
-    print_sep(tags)
 
     res_insert = db.insert_row_to_blog_db(data=new_blog_post_data)
 
