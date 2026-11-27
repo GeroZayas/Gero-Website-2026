@@ -1,5 +1,6 @@
 import json
 import os
+from collections import defaultdict
 from time import sleep
 from typing import Literal
 
@@ -153,24 +154,24 @@ def return_dict_db_blog_entries():
     return dict_db_blog_entries
 
 
-def return_blog_entries_tags_set():
-    dict_db_blog_entries_tags_set = set()
-    # dict_db_blog_entries_tags_set.add("all")
-    dict_db_blog_entries_tags = [
-        [dict_db_blog_entries_tags_set.add(t) for t in d["tags"].split(",")]
-        for d in return_dict_db_blog_entries()
-    ]
-    ic(dict_db_blog_entries_tags_set)
-    return dict_db_blog_entries_tags_set
+def return_blog_entries_tags_dict():
+    dict_db_blog_entries_tags_dict = defaultdict(int)
+    for bp in return_dict_db_blog_entries():
+        for t in str.split(bp["tags"], ","):
+            dict_db_blog_entries_tags_dict[t] = 1 + dict_db_blog_entries_tags_dict.get(
+                t, 0
+            )
+
+    ic(dict_db_blog_entries_tags_dict)
+    return dict_db_blog_entries_tags_dict
 
 
-# ***A
 @app.get("/blog")
 async def blog(request: Request, signals: ReadSignals):
     context = {
         "message": "This is blog page",
         "blog_posts": return_dict_db_blog_entries(),
-        "tags": return_blog_entries_tags_set(),
+        "tags": return_blog_entries_tags_dict(),
     }
     return templates.TemplateResponse(
         request=request, name="blog.html", context=context
