@@ -15,7 +15,6 @@ blog_post_card %}
 
 {% include "create_delete_post.html" %}
 
-
 <!-- ================= SEARCH / FILTER ============================ -->
 <div class="mb-2" id="search">
     Search:
@@ -24,20 +23,29 @@ blog_post_card %}
     <!-- <button class="bg-white border border-gray-200" data-on:click="@get('/blog-post-card-render')">GO</button> -->
 </div>
 <!-- ================= TAGS ============================ -->
-<div id="tags-area">
-    <button data-on:click="$selected-tag='{{tag}}'; @get('/blog-post-card-render')"
-        class="text-xs bg-teal-600 hover:bg-teal-500 text-white px-1 border-b-1 border-teal-800 hover:border-teal-700 rounded">All
-        Tags
-    </button>
-    {% for tag, c in tags.items() %}
-    <button data-on:click="$selected-tag='{{tag}}'; $current-page=1;@get('/blog-post-card-render')"
-        class="text-xs bg-yellow-600 hover:bg-yellow-500 text-white px-1 border-b-1 border-yellow-800 hover:border-yellow-700 rounded">{{tag}}
-        <span class="pl-1 pr-1 font-bold bg-red-700 text-white" >{{c}}</span>
-    </button>
-    {% endfor %}
+<div id="tags-area" class="mb-2 bg-slate-100 p-1 rounded">
+    <details class="peer">
+        <summary class="cursor-pointer marker:text-amber-500 marker:text-xs text-sm select-none">Tags</summary>
+    </details>
 
+    <div class="grid grid-rows-[0fr] transition-[grid-template-rows] duration-200 ease-out peer-open:grid-rows-[1fr]">
+        <div class="overflow-hidden">
+            <div class="pt-1 flex flex-wrap gap-1">
+                <button data-on:click="$selected-tag='{{tag}}'; @get('/blog-post-card-render')"
+                    class="text-xs bg-teal-600 hover:bg-teal-500 text-white px-1 border-b-1 border-teal-800 hover:border-teal-700 rounded">All
+                    Tags
+                </button>
+                {% for tag, c in tags.items() %}
+                <button data-on:click="$selected-tag='{{tag}}'; $current-page=1;@get('/blog-post-card-render')"
+                    class="text-xs bg-yellow-600 hover:bg-yellow-500 text-white px-1 border-b-1 border-yellow-800 hover:border-yellow-700 rounded">{{tag}}
+                    <span class="pl-1 pr-1 font-bold bg-red-700 text-white">{{c}}</span>
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </div>
-<br>
+
 <!-- ================= BLOG POSTS AREA ============================ -->
 <div data-init="@get('/blog-post-card-render')" id="blog-posts-cards-area" class="grid grid-cols-1 gap-3 bg-red-200">
 </div>
