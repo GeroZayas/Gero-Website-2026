@@ -29,9 +29,10 @@ blog_post_card %}
         class="text-xs bg-teal-600 hover:bg-teal-500 text-white px-1 border-b-1 border-teal-800 hover:border-teal-700 rounded">All
         Tags
     </button>
-    {% for tag in tags %}
+    {% for tag, c in tags.items() %}
     <button data-on:click="$selected-tag='{{tag}}'; $current-page=1;@get('/blog-post-card-render')"
         class="text-xs bg-yellow-600 hover:bg-yellow-500 text-white px-1 border-b-1 border-yellow-800 hover:border-yellow-700 rounded">{{tag}}
+        <span class="pl-1 pr-1 font-bold bg-red-700 text-white" >{{c}}</span>
     </button>
     {% endfor %}
 

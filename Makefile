@@ -19,4 +19,4 @@ help:
 	@cat Makefile
 
 scratch:
-	python3 scratch_buffer.py
+	@clear && python3 scratch_buffer.py
